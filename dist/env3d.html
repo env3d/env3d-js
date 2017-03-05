@@ -1,0 +1,132 @@
+<html>
+    <head>
+        <script src="j4ts-0.2.0-SNAPSHOT/bundle.js"></script>
+        <script src="js/env3d.js"></script>
+         
+        <script type="text/javascript">
+
+         function Doty() {
+             this.x = 5;
+             this.y = 1;
+             this.z = 1;
+             this.frame = 0;
+
+             this.texture = "models/cube/cube.png";
+             this.model = "models/cube/cube.obj";
+             
+             this.move = function() {
+                 this.y = Math.abs(Math.sin(this.frame)) + 1;
+                 this.frame+=0.1;
+                 this.rotateY += 0.1;
+             }
+         }
+         var d = {
+             x : 5,
+             y : 1,
+             z : 0,
+             scale: 5,
+             //texture: "models/tux/tux.png",
+             //model: "models/tux/tux.obj"
+             texture: "models/Boss/boss.png",
+             model: "models/Boss/boss.obj"
+         };
+         
+         
+         function Game() {
+             
+             var ENV = new env3d.Env();
+             
+             var client = new XMLHttpRequest();
+             client.open('GET', 'world.txt');
+             client.onreadystatechange = function(state) {
+                 if (client.readyState == 4) {
+                     // parse the csv file
+                     var lines = client.responseText.split('\n');
+                     lines.forEach(function(line) {                     
+                         console.log(line);
+                         var tokens = line.split(',');
+                         switch(tokens[0]) {
+                             case 'skybox':
+                                 ENV.setSky(tokens[1]);
+                                 break;
+                             case 'camera':
+                                 
+                                 ENV.cameraX = tokens[1];
+                                 ENV.cameraY = tokens[2];
+                                 ENV.cameraZ = tokens[3];
+                                 
+                                 ENV.cameraPitch = parseFloat(tokens[4]) * (Math.PI / 180);
+                                 ENV.cameraYaw = parseFloat(tokens[5]) * (Math.PI / 180);                                 
+                                 break;
+                             case 'terrain':
+                                 ENV.setTerrain(tokens[3]);
+                                 break;
+                             case 'object':
+                                 var objClass = tokens[10];
+                                 console.log("Creating GameObject of class "+objClass);
+                                 //var gameObject = eval('new '+objClass+'()');                                 
+                                 var gameObject = new window[objClass](tokens[1], tokens[2], tokens[3]);
+                                 console.log(gameObject);
+                                 gameObject.scale = tokens[4];
+
+                                 gameObject.rotateX = parseFloat(tokens[5]);
+                                 gameObject.rotateY = parseFloat(tokens[6]);
+                                 gameObject.rotateZ = parseFloat(tokens[7]);
+
+                                 gameObject.model = tokens[8];
+                                 gameObject.texture = tokens[9];
+
+                                 ENV.addObject(gameObject);
+
+                             default:
+                                 //console.warn('unable to parse line',line);
+                         }
+                     });
+                 }
+             } 
+             //client.send();
+
+             ENV.cameraPitch = -Math.PI/8;
+             ENV.defaultControl = true;
+             ENV.start();
+             ENV.addObject(d);
+             //ENV.setRoom(new Room());
+
+             this.play = function() {
+                 if (ENV.getKeyDown() == org.lwjgl.input.Keyboard.KEY_UP) {
+                     d.rotateY -= 1;                     
+                 } else {
+                     d.rotateY += 1;
+                 }
+                 /*
+                 ENV.gameObjects.filter(function(o) {
+                     return (o instanceof Tux);
+                 }).forEach(function (o) {
+                     //console.log(o);
+                     o.setState(7);
+                 });
+                 */
+             }
+
+             ENV.loop = this.play;
+             
+         }
+         
+
+         window.addEventListener("load", function() {
+             var game = new Game();
+             
+         });
+         
+        </script>
+        <style>
+         body {
+             margin: 0;
+             padding: 0;
+         }
+        </style>
+    </head>
+    <body>
+        <div id="env3d"></div>
+    </body>
+</html>

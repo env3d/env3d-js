@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+        <script src="j4ts-0.2.0-SNAPSHOT/bundle.js"></script>
+        <script src="js/env3d.js"></script>
+        <script src="bundle.js"></script>
+        
+        <script type="text/javascript">         
+
+         function playGame() {
+             console.log("playGame");
+             var game = new Game();
+
+             game.setup();
+             
+             var env;
+             if (game.env) {
+                 env = game.env;
+             } else {
+                 env = new env3d.Env();
+             }
+            
+             env.loop = game.loop.bind(game);             
+             env.start();
+         }
+         
+         document.addEventListener('DOMContentLoaded', function() {
+            playGame();
+         });
+         
+        </script>
+         
+        <style>
+         html,
+         body {
+             margin: 0;
+             height: 100%;
+             width: 100%;
+             overflow: auto;
+             -webkit-overflow-scrolling: touch;
+         }
+         canvas {
+             display: block;
+         }
+             
+        </style>
+    </head>
+    <body>
+        <div id="env3d"></div>
+    </body>
+    
+</html>

@@ -1,0 +1,29 @@
+{
+  "name": "env3d-js",
+  "version": "1.0.0",
+  "description": "",
+  "main": "build/env3d.js",
+  "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1",
+      "build": "browserify src/env3d.js -o dist/js/env3d.js -d",
+      "watch": "watchify src/env3d.js -o dist/js/env3d.js -d",
+      "start": "cd dist; lite-server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/env3d/env3d-js.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/env3d/env3d-js/issues"
+  },
+  "homepage": "https://github.com/env3d/env3d-js#readme",
+  "dependencies": {
+    "three": "^0.84.0"
+  },
+  "devDependencies": {
+    "watchify": "^3.9.0"
+  }
+}

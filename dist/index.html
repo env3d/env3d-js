@@ -1,0 +1,47 @@
+<html>
+    <head>
+
+        <script src="js/env3d.js"></script>
+         
+        <script type="text/javascript">
+
+         function Cube() {
+             this.x = 5;
+             this.y = 1;
+             this.z = 1;
+             this.frame = 0;
+
+             this.texture = "models/cube/cube.png";
+             this.model = "models/cube/cube.obj";
+             
+             this.move = function() {
+                 this.y = Math.abs(Math.sin(this.frame)) + 1;
+                 this.frame+=0.1;
+                 this.rotateY += 0.1;
+             }
+         }
+         
+         window.addEventListener('load', function() {
+             var env = new env3d.Env();
+             console.log(env);
+             env.setRoom({
+                 textureNorth: "textures/floor.png",
+                 textureTop: null,
+                 width: 20,
+                 height: 20,
+                 depth: 2
+             });
+             env.addObject(new Cube());
+             env.start();
+         });
+        </script>
+        <style>
+         body {
+             margin: 0;
+             padding: 0;
+         }
+        </style>
+    </head>
+    <body>
+    </body>
+</html>
