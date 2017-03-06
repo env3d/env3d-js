@@ -5,7 +5,10 @@ var Keyboard = require('./lwjgl-keyboard.js');
 var Hud = require('./hud.js');
 var DefaultControlHandlers = require('./DefaultControlHandlers.js');
 
-var Env = function() {
+// If defaultRoom is true, create one
+var Env = function(defaultRoom) {
+
+    if (defaultRoom === undefined) defaultRoom = true;
 
     // Create ENV as this to preserve scope
     var ENV = this;
@@ -46,8 +49,10 @@ var Env = function() {
     var light = new THREE.DirectionalLight( 0xffffff, 1.5 );
     light.position.set( 0, -4, -4 ).normalize();
     //this.scene.add( light );
-
-    this.setRoom(new DefaultRoom());
+    
+    if (defaultRoom) {
+        this.setRoom(new DefaultRoom());
+    }
     // Attach to the body, taking over the entire window
     // @todo: want to attach to an element, maybe create custom element
 
@@ -59,13 +64,11 @@ var Env = function() {
         this.lastKey = e.keyCode;
         this.lastKeyDown = 0;
         this.keys[e.keyCode] = false;
-        console.log(this.lastKey);
     }).bind(this));
 
     document.addEventListener('keydown', (function(e) {
         this.lastKeyDown = e.keyCode;
         this.keys[e.keyCode] = true;
-        console.log(this.keys);        
     }).bind(this));
     
 }
@@ -79,7 +82,7 @@ Env.prototype.debugCameraPosition = function() {
 
 Env.prototype.setDefaultControl = function(control) {
     console.warn('setting default control to '+control);
-    var ENV = this;
+
     this.defaultControl = control;
     
     if (control) {
@@ -131,6 +134,7 @@ Env.prototype.setTerrain = function(textureFile) {
 };
 
 Env.prototype.setRoom = function(room) {
+    console.log("clearing scene");
     this.clearScene();
     
     this.scene.remove(this.room);
@@ -239,8 +243,8 @@ Env.prototype.start = function() {
     ENV.camera.position.x = ENV.cameraX;
     ENV.camera.position.y = ENV.cameraY;
     ENV.camera.position.z = ENV.cameraZ;
-    ENV.camera.rotation.x = ENV.cameraPitch;
-    ENV.camera.rotation.y = ENV.cameraYaw;
+    ENV.camera.rotation.x = ENV.cameraPitch * (Math.PI / 180);
+    ENV.camera.rotation.y = ENV.cameraYaw * (Math.PI / 180);
 
     ENV.renderer.render(ENV.scene, ENV.camera);
     ENV.renderer.render(this.hud.scene, this.hud.camera);
@@ -337,11 +341,11 @@ Env.prototype.setCameraXYZ = function(x, y, z) {
 }
 
 Env.prototype.setCameraPitch = function(pitch) {
-    this.cameraPitch = pitch * (Math.PI/180)
+    this.cameraPitch = pitch;
 }
 
 Env.prototype.setCameraYaw = function(yaw) {
-    this.cameraYaw = yaw * (Math.PI/180)
+    this.cameraYaw = yaw;
 }
 
 var lwjglKey = {37:203, 38:200, 39:205, 40:208};

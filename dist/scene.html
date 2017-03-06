@@ -1,40 +1,14 @@
 <html>
+    <!-- Entry point for scenecreator based applications -->
     <head>
-        <script src="j4ts-0.2.0-SNAPSHOT/bundle.js"></script>
+        <script src="js/j4ts-0.2.0-SNAPSHOT/bundle.js"></script>
         <script src="js/env3d.js"></script>
-        <script src="bundle.js"></script>
+        <script src="js/bundle.js"></script>
         <script type="text/javascript">
-
-         function Doty() {
-             this.x = 5;
-             this.y = 1;
-             this.z = 1;
-             this.frame = 0;
-
-             this.texture = "models/cube/cube.png";
-             this.model = "models/cube/cube.obj";
-             
-             this.move = function() {
-                 this.y = Math.abs(Math.sin(this.frame)) + 1;
-                 this.frame+=0.1;
-                 this.rotateY += 0.1;
-             }
-         }
-         var d = {
-             x : 5,
-             y : 1,
-             z : 0,
-             scale: 5,
-             //texture: "models/tux/tux.png",
-             //model: "models/tux/tux.obj"
-             texture: "models/Boss/boss.png",
-             model: "models/Boss/boss.obj"
-         };
-         
          
          function Game() {
              
-             var ENV = new env3d.Env();
+             var ENV = new env3d.Env(false);
              
              var client = new XMLHttpRequest();
              client.open('GET', 'world.txt');
@@ -51,12 +25,12 @@
                                  break;
                              case 'camera':
                                  
-                                 ENV.cameraX = tokens[1];
-                                 ENV.cameraY = tokens[2];
-                                 ENV.cameraZ = tokens[3];
+                                 ENV.cameraX = parseFloat(tokens[1]);
+                                 ENV.cameraY = parseFloat(tokens[2]);
+                                 ENV.cameraZ = parseFloat(tokens[3]);
                                  
-                                 ENV.cameraPitch = parseFloat(tokens[4]) * (Math.PI / 180);
-                                 ENV.cameraYaw = parseFloat(tokens[5]) * (Math.PI / 180);                                 
+                                 ENV.cameraPitch = parseFloat(tokens[5]);
+                                 ENV.cameraYaw = parseFloat(tokens[4]);
                                  break;
                              case 'terrain':
                                  ENV.setTerrain(tokens[3]);
@@ -65,7 +39,11 @@
                                  var objClass = tokens[10];
                                  console.log("Creating GameObject of class "+objClass);
                                  //var gameObject = eval('new '+objClass+'()');                                 
-                                 var gameObject = new window[objClass](tokens[1], tokens[2], tokens[3]);
+                                 var gameObject = new window[objClass](
+                                     parseFloat(tokens[1]),
+                                     parseFloat(tokens[2]),
+                                     parseFloat(tokens[3])
+                                 );
                                  console.log(gameObject);
                                  gameObject.scale = tokens[4];
 
@@ -86,26 +64,11 @@
              } 
              client.send();
 
-             ENV.cameraPitch = -Math.PI/8;
-             ENV.defaultControl = true;
              ENV.start();
-             ENV.addObject(d);
-             //ENV.setRoom(new Room());
-
              this.play = function() {
-                 if (ENV.getKeyDown() == org.lwjgl.input.Keyboard.KEY_UP) {
-                     d.rotateY -= 1;                     
-                 } else {
-                     d.rotateY += 1;
-                 }
-                 /*
-                 ENV.gameObjects.filter(function(o) {
-                     return (o instanceof Tux);
-                 }).forEach(function (o) {
-                     //console.log(o);
-                     o.setState(7);
+                 ENV.gameObjects.forEach(function(obj) {
+                     obj.move();
                  });
-                 */
              }
 
              ENV.loop = this.play;

@@ -1,0 +1,5 @@
+skybox,textures/skybox/city
+camera,0.17316095530986786,1.0759221315383911,10.40672779083252,-13.372842788696289,-5.315665245056152
+terrain,textures/terrain/flat.png,textures/terrain/alpha.png,textures/floor/clover1.png,textures/floor/clover1.png,textures/floor/clover1.png
+object,3.0,1.0,1.0,1.0,0.0,0.0,0.0,models/boxDude/box-dude.obj,models/boxDude/army.png,BoxDude
+object,1.0,1.0,0.0,1.0,0.0,0.0,0.0,models/cube/cube.obj,models/cube/cube.png,Cube

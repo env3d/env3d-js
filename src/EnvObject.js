@@ -144,6 +144,11 @@
         return EnvObject;
     }());
     env3d.EnvObject = EnvObject;
+
+    // In Javascript, the EnvNode class is simply an alias for EnvObject
+    env3d.advanced = {};
+    env3d.advanced.EnvNode = EnvObject;
+    
     EnvObject["__class"] = "env3d.EnvObject";
 
     module.exports = EnvObject;
