@@ -17,6 +17,7 @@ var GameObject = function() {
 
 GameObject.objLoader = new THREE.OBJLoader();
 GameObject.textureLoader = new THREE.TextureLoader();
+GameObject.textureLoader.crossOrigin = 'Anonymous';
 
 GameObject.modelsCache = {};
 GameObject.loadObj = function (model, callback) {
@@ -24,7 +25,7 @@ GameObject.loadObj = function (model, callback) {
         callback.call(null,GameObject.modelsCache[model]);
     } else {
         GameObject.objLoader.load(model, function(m) {
-            console.log("model loaded",m);
+            //console.log("model loaded",m);
             GameObject.modelsCache[model] = m;
             callback.call(null, m);
         });
@@ -49,13 +50,20 @@ GameObject.patchGameObject = function patchFun(gameobj) {
         gameobj._model = gameobj.model;
     }
 
-    gameobj.geometry = new THREE.SphereGeometry( 1 );
+    gameobj.geometry = new THREE.SphereGeometry( 1, 16, 16 );
+    // have to remap the uv to map things properly
+    // http://stackoverflow.com/questions/21663923/mapping-image-onto-a-sphere-in-three-js
+    var faceVertexUvs = gameobj.geometry.faceVertexUvs[ 0 ];    
+    for ( i = 0; i < faceVertexUvs.length; i ++ ) {   
+	var uvs = faceVertexUvs[ i ];
+	for ( var j = 0; j < 3; j ++ ) {
+            uvs[j].x += 0.25;
+	}
+    }
     gameobj.material = new THREE.MeshBasicMaterial();
 
     var self = gameobj;
     GameObject.textureLoader.load(gameobj.texture, function(texture) {
-        console.log("texture loaded");
-        console.log(self);
         self.material = new THREE.MeshBasicMaterial({map:texture, side:THREE.DoubleSide});
         gameobj.mesh.children.forEach(function(c) {
             c.material = gameobj.material;
@@ -64,6 +72,7 @@ GameObject.patchGameObject = function patchFun(gameobj) {
     });    
 
     gameobj.mesh = new THREE.Group();
+    gameobj.mesh.rotation.order = "YXZ";
     gameobj.mesh.add(new THREE.Mesh( gameobj.geometry, gameobj.material ));
     gameobj.mesh.name = gameobj.model;
     gameobj.mesh.envGameObject = gameobj;
@@ -76,7 +85,6 @@ GameObject.patchGameObject = function patchFun(gameobj) {
 
 	gameobj.mesh.rotation.x = gameobj.rotateX * (Math.PI/180);
 	gameobj.mesh.rotation.y = gameobj.rotateY * (Math.PI/180);
-	if (gameobj.model == "sphere") gameobj.mesh.rotation.y -= Math.PI/2;
 	gameobj.mesh.rotation.z = gameobj.rotateZ  * (Math.PI/180);
 
 	gameobj.mesh.scale.x = gameobj.scale;

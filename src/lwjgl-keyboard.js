@@ -155,13 +155,18 @@ var org;
                 Keyboard.KEY_SLEEP = 223;
                 Keyboard.KEYBOARD_SIZE = 256;
 
+                
                 // reassigning for browser
                 Keyboard.KEY_UP = 38;                
                 Keyboard.KEY_LEFT = 37;
                 Keyboard.KEY_RIGHT = 39;
                 Keyboard.KEY_DOWN = 40;
-                Keyboard.KEY_L = 76;
-                Keyboard.KEY_S = 83;               
+
+                // reassigning A - Z
+                for (var i = 65; i <= 90; i++) {
+                    var c = String.fromCharCode(i);                    
+                    Keyboard["KEY_"+c] = i;
+                }
                 
                 /**
                  * Buffer size in events
@@ -190,4 +195,4 @@ var Keyboard = {
     KEY_S : 83                
 }
 // We will also create a keyboard class for web use
-module.exports = Keyboard;
+module.exports = org.lwjgl.input.Keyboard;

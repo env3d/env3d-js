@@ -1,0 +1,76 @@
+html, body {
+    margin: 0;
+    height: 100%;
+    width: 100%;
+}
+
+canvas {
+    display: block;
+}
+
+#controller {
+    display: none;
+}
+
+#instructions {
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    color: white;
+    text-align: center;
+}
+
+@media screen and (max-width: 768px) {
+
+    #instructions {
+        display: none;
+    }
+    
+    #controller {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: fixed;                 
+        bottom:10px;
+        width: 80%;
+        height: 50%;
+        margin-left: 10%;
+    }
+    
+    .dpad {
+        width: 40%;
+        float: left;
+        height: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    [env3d-key] {
+        user-select: none;
+        background-color: rgba(100,100,100,0.6);
+        height: 33%;        
+    }
+    
+    .dpad > [env3d-key] {
+        width: 33%;        
+    }
+    
+    #controller > [env3d-key] {
+        width: 15%;
+    }
+    
+    .dpad > [env3d-key]:first-child, .dpad > [env3d-key]:last-child {
+        margin: 0 33% 0;                 
+    }
+}
+
+@media screen and (max-width: 480px) {
+    #controller {
+        height: 33%;
+    }
+    .dpad {
+        width: 60%;
+    }
+}

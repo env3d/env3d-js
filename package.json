@@ -4,10 +4,12 @@
   "description": "",
   "main": "build/env3d.js",
   "scripts": {
-      "test": "echo \"Error: no test specified\" && exit 1",
-      "build": "browserify src/env3d.js -o dist/js/env3d.js -d",
-      "watch": "watchify src/env3d.js -o dist/js/env3d.js -d",
-      "start": "cd dist; lite-server"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "ugly": "uglifyjs dist/js/env3d.js dist/js/j4ts-0.2.0-SNAPSHOT/bundle.js -o dist/bundle.js -c -m",
+    "build": "browsify src/env3d.js -o dist/js/env3d.js -d",
+    "watch": "watchify src/env3d.js -o dist/js/env3d.js -d",
+    "lite": "cd dist; lite-server",
+    "start": "npm run watch & npm run lite"
   },
   "repository": {
     "type": "git",
@@ -24,6 +26,7 @@
     "three": "^0.84.0"
   },
   "devDependencies": {
-    "watchify": "^3.9.0"
+    "watchify": "^3.9.0",
+    "uglify-js": "^2.8.7"
   }
 }

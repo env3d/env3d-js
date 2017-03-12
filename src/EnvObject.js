@@ -8,15 +8,7 @@
         /**
          * Creates a new instance of EnvObject
          */
-        function EnvObject() {
-            this.x = 0;
-            this.y = 0;
-            this.z = 0;
-            this.scale = 0;
-            this.rotateX = 0;
-            this.rotateY = 0;
-            this.rotateZ = 0;
-            this.transparent = false;
+        function EnvObject() {            
             this.x = 0;
             this.y = 0;
             this.z = 0;
@@ -96,6 +88,7 @@
             zdiff = obj.getZ() - this.getZ();
             return Math.sqrt(xdiff * xdiff + ydiff * ydiff + zdiff * zdiff);
         };
+        
         EnvObject.prototype.distance = function (x, y, z) {
             var _this = this;
             if (((typeof x === 'number') || x === null) && ((typeof y === 'number') || y === null) && ((typeof z === 'number') || z === null)) {
@@ -116,6 +109,7 @@
             else
                 throw new Error('invalid overload');
         };
+
         /**
          * @return the transparent
          */

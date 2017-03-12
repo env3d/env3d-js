@@ -41,37 +41,77 @@ var Hud = function(env, width, height) {
         new THREE.Mesh( this.planeGeometry, this.material )
     );
 
-    // --- Touch handlers ---
-    var touchdown = function(e) {
-        var pageX = e instanceof TouchEvent ? e.changedTouches[0].pageX : e.pageX;
-        var pageY = e instanceof TouchEvent ? e.changedTouches[0].pageY : e.pageY;
-        var midHeight = this.hudCanvas.height / 2;        
-        var midWidth = this.hudCanvas.width / 2;
-        var deadZoneY = this.hudCanvas.height / 8;
-        
-        if (pageY < midHeight - deadZoneY) {
-            //env.lastKeyDown = 38;
-            env.lastKeyDown = Keyboard.KEY_UP;
-        } else if (pageY > midHeight + deadZoneY) {
-            env.lastKeyDown = Keyboard.KEY_DOWN;
-        } else if (pageX > midWidth) {
-            env.lastKeyDown = Keyboard.KEY_RIGHT;            
-        } else if (pageX < midWidth) {
-            env.lastKeyDown = Keyboard.KEY_LEFT;          
+    var touching = false;
+    // --- Screen touch  handlers ---
+    var screenDown = function(ev) {
+        if (ev) {
+            var pageX = ev.pageX || ev.touches.item(0).pageX;
+            var pageY = ev.pageY || ev.touches.item(0).pageY;
+            env.mouse['0'] = true;
+            env.lastMouse = 0;
+            touching = true;
+            env.mouseX = pageX;
+            env.mouseY = pageY;
         }
+    }
 
-        console.log(pageX+" "+pageY);
-    }.bind(this);
-
-    var touchup = function() {
+    var screenMove = function(ev) {
+        if (ev) {
+            var pageX = ev && (ev.pageX || ev.touches.item(0).pageX);
+            var pageY = ev && (ev.pageY || ev.touches.item(0).pageY);
+            if (touching) {
+                env.mouseDX = pageX - env.mouseX;
+                env.mouseDY = pageY - env.mouseY;
+                //env.mouseX = pageX;
+                env.mouseY = pageY;
+            }
+        }
+    }
+    
+    var resetKeys = function() {
         env.lastKeyDown = 0;
+        env.mouse['0'] = false;
+        env.lastMouse = -1;
+        env.mouseDX = 0;
+        env.mouseDY = 0;
+        touching = false;
     }.bind(this);
+
+    document.addEventListener('mousedown', screenDown);
+    document.addEventListener('touchstart', screenDown);
+
+    document.addEventListener('mousemove', screenMove);
+    document.addEventListener('touchmove', screenMove);
+
+    document.addEventListener('mouseup', resetKeys);
+    document.addEventListener('touchend', resetKeys);
+
     
-    document.addEventListener('mousedown', touchdown);
-    document.addEventListener('touchstart', touchdown);
-    
-    document.addEventListener('mouseup', touchup);
-    document.addEventListener('touchend', touchup);
+    // Buttons handlers
+    var touchdown = function(e) {
+        var keycode = Keyboard[this.getAttribute("env3d-key")];
+        env.lastKeyDown = keycode;
+        env.keys[keycode] = true;
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    var touchup = function(e) {
+        var keycode = Keyboard[this.getAttribute("env3d-key")];        
+        env.keys[keycode] = false;
+        e.preventDefault();
+        e.stopPropagation();        
+    }    
+
+
+    var buttonList = document.querySelectorAll('[env3d-key]');
+    for (var i=0; i<buttonList.length;i++) {
+        var button = buttonList.item(i);
+        button.addEventListener('mousedown', touchdown.bind(button));
+        button.addEventListener('touchstart', touchdown.bind(button));
+        button.addEventListener('mouseup', touchup.bind(button));
+        button.addEventListener('touchend', touchup.bind(button));        
+    }
 }
 
 Hud.prototype.write = function(str) {

@@ -1,6 +1,10 @@
 <html>
     <!-- Entry point for scenecreator based applications -->
     <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"> 
+
+        <link rel="stylesheet" href="env3d.css" />
+        
         <script src="js/j4ts-0.2.0-SNAPSHOT/bundle.js"></script>
         <script src="js/env3d.js"></script>
         <script src="js/bundle.js"></script>
@@ -10,6 +14,9 @@
              
              var ENV = new env3d.Env(false);
              
+             ENV.setDefaultControl(false);
+
+             var dynamicClasses = [];
              var client = new XMLHttpRequest();
              client.open('GET', 'world.txt');
              client.onreadystatechange = function(state) {
@@ -37,7 +44,9 @@
                                  break;
                              case 'object':
                                  var objClass = tokens[10];
-                                 console.log("Creating GameObject of class "+objClass);
+                                 // Keep a list of all the classes that is required for the scene
+                                 dynamicClasses.push(window[objClass]);
+                                 //console.log("Creating GameObject of class "+objClass);
                                  //var gameObject = eval('new '+objClass+'()');                                 
                                  var gameObject = new window[objClass](
                                      parseFloat(tokens[1]),
@@ -45,7 +54,7 @@
                                      parseFloat(tokens[3])
                                  );
                                  console.log(gameObject);
-                                 gameObject.scale = tokens[4];
+                                 gameObject.scale = parseFloat(tokens[4]);
 
                                  gameObject.rotateX = parseFloat(tokens[5]);
                                  gameObject.rotateY = parseFloat(tokens[6]);
@@ -65,13 +74,50 @@
              client.send();
 
              ENV.start();
-             this.play = function() {
-                 ENV.gameObjects.forEach(function(obj) {
-                     obj.move();
+
+             // Now we load all the models from all the dynamicClasses
+             var models = [];
+             dynamicClasses.forEach(function(animatedModel) {
+                 var m = new animatedModel();
+                 m.modelsMap.values().toArray().forEach(function(list) {
+                     console.log("preload",list);
+                     list.forEach(function(model){
+                         console.log("preload",model);
+                         models.push(model);
+                     });
                  });
+             });
+             
+             // create a dummy object and assign it each model from each class
+             var i = 0;
+             var obj = {x:5,y:5,z:5,texture:"textures/black.png"};
+             ENV.addObject(obj);
+             console.log("preload", obj);
+             
+             // preload all the models into video memory by running assigning it
+             // into a dummy object for display
+             ENV.preload = true;             
+             var preload = function() {                 
+                 if (i < models.length-1) {
+                     obj.model = models[i++];
+                     // might as well display the percentage
+                     ENV.setDisplayStr(parseInt(i / models.length * 100) + "%");
+                 } else {
+                     ENV.removeObject(obj);
+                     ENV.preload = false;
+                     ENV.loop = play;
+                 }
              }
 
-             ENV.loop = this.play;
+             // The actual play method is simply moving all the objects
+             // gameplay logic is inside each of the gameobjects
+             var play = function() {
+                 ENV.gameObjects.forEach(function(obj) {
+                     obj.move();
+                 });                 
+             }
+
+             ENV.loop = preload;
              
          }
          
@@ -87,9 +133,22 @@
              margin: 0;
              padding: 0;
          }
+         canvas {
+             display: block;
+         }
         </style>
     </head>
     <body>
         <div id="env3d"></div>
+        <div id="controller">
+            <div class="dpad">
+                <button env3d-key="KEY_UP">UP</button>
+                <button env3d-key="KEY_LEFT">LEFT</button>
+                <button env3d-key="KEY_RIGHT">RIGHT</button>
+                <button env3d-key="KEY_DOWN">DOWN</button>
+            </div>
+            <button env3d-key="KEY_A">A</button>
+            <button env3d-key="KEY_D">D</button>
+        </div>        
     </body>
 </html>

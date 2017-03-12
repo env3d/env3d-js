@@ -2,6 +2,9 @@
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+
+        <link rel="stylesheet" href="env3d.css" />
+        
         <script src="js/j4ts-0.2.0-SNAPSHOT/bundle.js"></script>
         <script src="js/env3d.js"></script>
         <script src="js/bundle.js"></script>
@@ -25,29 +28,36 @@
              env.start();
          }
          
-         document.addEventListener('DOMContentLoaded', function() {
+         window.addEventListener('load', function() {
             playGame();
          });
          
         </script>
-         
         <style>
-         html,
          body {
              margin: 0;
-             height: 100%;
-             width: 100%;
-             overflow: auto;
-             -webkit-overflow-scrolling: touch;
+             padding: 0;
          }
          canvas {
              display: block;
          }
-             
+         #controller {
+             display: none;
+         }
         </style>
     </head>
     <body>
         <div id="env3d"></div>
+        <div id="controller">
+            <div class="dpad">
+                <button env3d-key="KEY_UP">UP</button>
+                <button env3d-key="KEY_LEFT">LEFT</button>
+                <button env3d-key="KEY_RIGHT">RIGHT</button>
+                <button env3d-key="KEY_DOWN">DOWN</button>
+            </div>
+            <button env3d-key="KEY_A">A</button>
+            <button env3d-key="KEY_Z">Z</button>            
+        </div>
     </body>
     
 </html>

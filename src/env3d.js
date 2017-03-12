@@ -1,13 +1,19 @@
-var THREE = require('three');
-var GameObject = require('./GameObject.js');
+THREE = require('three');
+
+require('../node_modules/three/examples/js/renderers/SoftwareRenderer.js');
+require('../node_modules/three/examples/js/renderers/Projector.js');
+
+var EnvGameObject = require('./GameObject.js');
 var DefaultRoom = require('./DefaultRoom.js');
 var Keyboard = require('./lwjgl-keyboard.js');
 var Hud = require('./hud.js');
 var DefaultControlHandlers = require('./DefaultControlHandlers.js');
+var Detector = require('../node_modules/three/examples/js/Detector.js');
 
 // If defaultRoom is true, create one
 var Env = function(defaultRoom) {
 
+    
     if (defaultRoom === undefined) defaultRoom = true;
 
     // Create ENV as this to preserve scope
@@ -15,8 +21,13 @@ var Env = function(defaultRoom) {
 
     // First create the HUD scene and camera
 
-    this.hud = new Hud(this, window.innerWidth, window.innerHeight);
+    //this.hud = new Hud(this, window.innerWidth, window.innerHeight);
 
+    this.hud = new Hud(this, 512, 512);
+
+    // Allow cross origin loading of images
+    THREE.ImageUtils.crossOrigin = 'Anonymous';
+    
     // The real scene and camera
     this.camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 10000 );
     this.camera.position.x = this.cameraX = 5;
@@ -37,14 +48,32 @@ var Env = function(defaultRoom) {
     this.scene.add(this.room);
     
     this.gameObjects = [];
-    
-    this.renderer = new THREE.WebGLRenderer();
+
+    //Detector.webgl = false;
+    if (Detector.webgl) {
+        this.renderer = new THREE.WebGLRenderer();
+        this.renderer.autoClear = false;
+    } else {
+        this.renderer = new THREE.SoftwareRenderer();
+    }    
+
     this.renderer.setSize( window.innerWidth, window.innerHeight );
-    this.renderer.autoClear = false;
+
     //this.renderer.setClearColor(0x00008f);
 
     this.lastKey = 0;
     this.lastKeyDown = 0;
+
+    this.mouseGrab = false;
+    this.lastMouse = -1;
+    this.mouse = {};
+
+    this.mouseX = 0;
+    this.mouseY = 0;
+    this.mouseDX = 0;
+    this.mouseDY = 0;
+
+    this.preload = false;
     
     var light = new THREE.DirectionalLight( 0xffffff, 1.5 );
     light.position.set( 0, -4, -4 ).normalize();
@@ -58,7 +87,6 @@ var Env = function(defaultRoom) {
 
     document.querySelector('#env3d').appendChild(ENV.renderer.domElement);
 
-
     this.keys = {};    
     document.addEventListener('keyup', (function(e) {
         this.lastKey = e.keyCode;
@@ -70,7 +98,12 @@ var Env = function(defaultRoom) {
         this.lastKeyDown = e.keyCode;
         this.keys[e.keyCode] = true;
     }).bind(this));
-    
+
+    window.addEventListener('resize', function() {
+	this.camera.aspect = window.innerWidth / window.innerHeight;
+	this.camera.updateProjectionMatrix();
+	this.renderer.setSize( window.innerWidth, window.innerHeight );
+    }.bind(this), false);
 }
 
 // A debug print of the current camera position and rotation
@@ -158,6 +191,7 @@ Env.prototype.setRoom = function(room) {
 	    var wallMat = new THREE.MeshBasicMaterial( {
                 map: THREE.ImageUtils.loadTexture(room[direction]),
                 side: THREE.DoubleSide
+                //side: THREE.FrontSide
             } );		
 	    var wallMesh = new THREE.Mesh(wall, wallMat);
             console.log(wallMesh);
@@ -169,17 +203,18 @@ Env.prototype.setRoom = function(room) {
                 wallMesh.position.y = room.height/2;
 	    } else if (direction.search("East") > -1) {
                 wallMesh.geometry = new THREE.PlaneGeometry(room.depth,room.height);
-		wallMesh.rotation.y = Math.PI/2;
+		wallMesh.rotation.y = -Math.PI/2;
 		wallMesh.position.x = room.width;
 		wallMesh.position.y = room.height/2;
 		wallMesh.position.z = room.depth/2;
 	    } else if (direction.search("West") > -1) {
                 wallMesh.geometry = new THREE.PlaneGeometry(room.depth,room.height);                
-		wallMesh.rotation.y = -Math.PI/2;
+		wallMesh.rotation.y = Math.PI/2;
 		wallMesh.position.y = room.height/2;
 		wallMesh.position.z = room.depth/2;
 	    } else if (direction.search("South") > -1) {
-                wallMesh.geometry = new THREE.PlaneGeometry(room.width,room.height);                
+                wallMesh.geometry = new THREE.PlaneGeometry(room.width,room.height);
+		wallMesh.rotation.y = Math.PI;                
 		wallMesh.position.x = room.width/2;
 		wallMesh.position.y = room.height/2;
 		wallMesh.position.z = room.depth;
@@ -204,11 +239,11 @@ Env.prototype.setRoom = function(room) {
 
 Env.prototype.addObject = function(obj) {
     
-    if (obj instanceof GameObject) {
+    if (obj instanceof EnvGameObject) {
 	this.scene.add(obj.mesh);
     } else {
         console.log("patching obj");
-        GameObject.patchGameObject(obj);
+        EnvGameObject.patchGameObject(obj);
 	this.scene.add(obj.mesh);            
     }
     
@@ -247,7 +282,9 @@ Env.prototype.start = function() {
     ENV.camera.rotation.y = ENV.cameraYaw * (Math.PI / 180);
 
     ENV.renderer.render(ENV.scene, ENV.camera);
-    ENV.renderer.render(this.hud.scene, this.hud.camera);
+    if (Detector.webgl) {
+        ENV.renderer.render(this.hud.scene, this.hud.camera);
+    }
     
     ENV.loop();
     for (var i = 0; i < ENV.gameObjects.length; i++) {	    
@@ -255,7 +292,14 @@ Env.prototype.start = function() {
 	//ENV.gameObjects[i].move();
     }
 
-    requestAnimationFrame(Env.prototype.start.bind(this));
+    if (this.preload) {
+        // in preload mode, update as fast as we can
+        requestAnimationFrame(Env.prototype.start.bind(this));
+    } else {
+        setTimeout(function() {
+            requestAnimationFrame(Env.prototype.start.bind(this));
+        }.bind(this), 1000 / 30);
+    }
     //THREE.AnimationHandler.update( clock.getDelta() );
     
 }
@@ -348,10 +392,30 @@ Env.prototype.setCameraYaw = function(yaw) {
     this.cameraYaw = yaw;
 }
 
+Env.prototype.getCameraYaw = function() {
+    return this.cameraYaw;
+}
+
+Env.prototype.getCameraPitch = function() {
+    return this.cameraPitch;
+}
+
+Env.prototype.getCameraX = function() {
+    return this.camera.position.x;
+}
+
+Env.prototype.getCameraY = function() {
+    return this.camera.position.y;
+}
+
+Env.prototype.getCameraZ = function() {
+    return this.camera.position.z;
+}
+
 var lwjglKey = {37:203, 38:200, 39:205, 40:208};
 Env.prototype.getKey = function() {
     if (this.lastKey != 0) {
-        console.log("getkey called "+this.lastKey);
+        //console.log("getkey called "+this.lastKey);
         var key = lwjglKey[this.lastKey] || this.lastKey
         this.lastKey = 0;
         return key;
@@ -359,15 +423,76 @@ Env.prototype.getKey = function() {
 }
 
 Env.prototype.getKeyDown = function() {
-    if (arguments.length == 0) 
+    if (arguments.length == 0)  {
         return this.lastKeyDown;
-    else
+    } else {        
+        //console.log(arguments[0], this.keys);
         return this.keys[arguments[0]];
+    }
+}
+
+
+Env.prototype.isMouseGrabbed = function() {
+    return this.mouseGrab;
+}
+
+Env.prototype.setMouseGrab = function(grab) {
+    this.mouseGrab = grab;
+}
+
+Env.prototype.getMouseButtonDown = function() {
+    return this.mouse['0'];
+}
+
+Env.prototype.getMouseButtonClicked = function() {
+    var lastMouse = this.lastMouse;
+    this.lastMouse = -1;
+    return lastMouse;
+}
+
+Env.prototype.getMouseDX = function() {
+    return this.mouseDX;
+}
+
+Env.prototype.getMouseDY = function() {
+    return this.mouseDY;
+}
+
+Env.prototype.getMouseX = function() {
+    return this.mouseX;
+}
+
+Env.prototype.getMouseY = function() {
+    return this.mouseY;
 }
 
 Env.prototype.setDisplayStr = function(str) {
-    console.log("displaying "+str);
+    //console.log("displaying "+str);
     this.hud.write(str);
+}
+
+Env.prototype.getObject = function(objClass) {
+    for (var i=0; i<this.gameObjects.length; i++) {
+        var obj = this.gameObjects[i];
+        if (obj instanceof objClass) {
+            return obj;
+        }        
+    }
+}
+
+//@todo: need to make this more efficient
+Env.prototype.getObjects = function() {
+    var gameObjectsArrayList = new java.util.ArrayList();    
+    for (var i=0; i<this.gameObjects.length; i++) {
+        if (arguments && arguments.length == 1) {
+            if (this.gameObjects[i] instanceof arguments[0]) {
+                gameObjectsArrayList.add(this.gameObjects[i]);
+            }
+        } else {
+            gameObjectsArrayList.add(this.gameObjects[i]);            
+        }
+    }    
+    return gameObjectsArrayList;
 }
 
 // The user will override this method to put in custom code
