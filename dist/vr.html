@@ -54,7 +54,6 @@
                  }
              }
              
-             
              document.addEventListener("webkitfullscreenchange", fsEvent);
              document.addEventListener("mozfullscreenchange", fsEvent);
              document.addEventListener("fullscreenchange", fsEvent);
@@ -79,7 +78,6 @@
                  env.setCameraYaw(yaw);
                  env.setCameraPitch(pitch);
                  env.setCameraRoll(roll);
-                 env.setDisplayStr(env.getKeyDown(179));
                  vrDisplay.requestAnimationFrame(this.vrAnimationFrame);
              }.bind(this);
                               

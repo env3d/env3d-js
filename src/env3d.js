@@ -16,7 +16,6 @@ var LoadWorld = require('./LoadWorld.js');
 // If defaultRoom is true, create one
 var Env = function(defaultRoom) {
 
-    
     if (defaultRoom === undefined) defaultRoom = true;
 
     // Create ENV as this to preserve scope
@@ -146,7 +145,7 @@ Env.prototype.setDefaultControl = function(control) {
 Env.prototype.setSky = function(path) {
     if (!path.endsWith('/')) path += '/';
     var loader = new THREE.CubeTextureLoader();        
-    loader.setPath(path);
+    loader.setPath(Env.baseAssetsUrl+path);
     var textureCube = loader.load( [
 	'east.png', 'west.png',
 	'top.png', 'bottom.png',
@@ -157,8 +156,7 @@ Env.prototype.setSky = function(path) {
 }
 
 Env.prototype.setTerrain = function(textureFile) {
-
-    var texture = THREE.ImageUtils.loadTexture(textureFile);
+    var texture = THREE.ImageUtils.loadTexture(Env.baseAssetsUrl+textureFile);
     texture.wrapS = THREE.RepeatWrapping; 
     texture.wrapT = THREE.RepeatWrapping;
     
@@ -199,8 +197,9 @@ Env.prototype.setRoom = function(room) {
     for (var direction in room) {
 	if (direction.search("texture") > -1 && room[direction] != null) {
 	    var wall = new THREE.PlaneGeometry();
-	    var wallMat = new THREE.MeshBasicMaterial( {
-                map: THREE.ImageUtils.loadTexture(room[direction]),
+            var textureUrl = Env.baseAssetsUrl+room[direction];
+	    var wallMat = new THREE.MeshBasicMaterial( {                
+                map: THREE.ImageUtils.loadTexture(textureUrl),
                 side: THREE.DoubleSide
                 //side: THREE.FrontSide
             } );		
@@ -250,15 +249,15 @@ Env.prototype.setRoom = function(room) {
 
 Env.prototype.addObject = function(obj) {
     
+    obj.env = this;
     if (obj instanceof EnvGameObject) {
 	this.scene.add(obj.mesh);
     } else {
-        console.log("patching obj");
+        //console.log("patching obj");
         EnvGameObject.patchGameObject(obj);
 	this.scene.add(obj.mesh);            
     }
     
-    obj.env = this;
     this.gameObjects.push(obj);
     
 }
@@ -284,7 +283,7 @@ var clock = new THREE.Clock();
 
 Env.prototype.start = function() {
     var ENV = this;
-        
+    
     ENV.camera.rotation.order = "YXZ";
     ENV.camera.position.x = ENV.cameraX;
     ENV.camera.position.y = ENV.cameraY;
@@ -523,6 +522,12 @@ Env.prototype.loop = function() {}
 // Compatibility with jme version, not functional
 Env.prototype.advanceOneFrame = function() {}
 
+// This is prepeneded to all
+// access to textures/ models/ and sounds/
+Env.baseAssetsUrl = "";
+
+module.exports = Env;
+
 // We create the env3d object, which will be "exported"
 // Since we are including it in HTML, we allow it
 // to be created under window
@@ -531,3 +536,5 @@ window['env3d'].Env = Env;
 
 var EnvObject = require('./EnvObject.js');
 window['env3d'].EnvObject = EnvObject;
+
+

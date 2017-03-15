@@ -20,14 +20,27 @@ GameObject.textureLoader = new THREE.TextureLoader();
 GameObject.textureLoader.crossOrigin = 'Anonymous';
 
 GameObject.modelsCache = {};
+GameObject.texturesCache = {};
+
 GameObject.loadObj = function (model, callback) {
+    model = env3d.Env.baseAssetsUrl+model;
     if (GameObject.modelsCache[model]) {
         callback.call(null,GameObject.modelsCache[model]);
     } else {
         GameObject.objLoader.load(model, function(m) {
-            //console.log("model loaded",m);
             GameObject.modelsCache[model] = m;
             callback.call(null, m);
+        });
+    }
+}
+GameObject.loadTexture = function(texture, callback) {
+    texture = env3d.Env.baseAssetsUrl+texture;    
+    if (GameObject.texturesCache[texture]) {
+        callback.call(null,GameObject.texturesCache[texture]);
+    } else {
+        GameObject.textureLoader.load(texture, function(t) {
+            GameObject.texturesCache[texture] = t;
+            callback.call(null, t);
         });
     }
 }
@@ -63,7 +76,8 @@ GameObject.patchGameObject = function patchFun(gameobj) {
     gameobj.material = new THREE.MeshBasicMaterial();
 
     var self = gameobj;
-    GameObject.textureLoader.load(gameobj.texture, function(texture) {
+    
+    GameObject.loadTexture(gameobj.texture, function(texture) {
         self.material = new THREE.MeshBasicMaterial({map:texture, side:THREE.DoubleSide});
         gameobj.mesh.children.forEach(function(c) {
             c.material = gameobj.material;
@@ -93,7 +107,7 @@ GameObject.patchGameObject = function patchFun(gameobj) {
         
 	if (gameobj.texture != gameobj._texture) {
 	    gameobj._texture = gameobj.texture;
-            GameObject.textureLoader.load(gameobj.texture, function(texture) {
+            GameObject.loadTexture(gameobj.texture, function(texture) {
                 var newMaterial = new THREE.MeshBasicMaterial({map:texture, side:THREE.DoubleSide});
                 //gameobj.mesh.material = newMaterial;
                 gameobj.material = newMaterial;
