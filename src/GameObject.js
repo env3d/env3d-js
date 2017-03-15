@@ -77,19 +77,19 @@ GameObject.patchGameObject = function patchFun(gameobj) {
 
     var self = gameobj;
     
+    gameobj.mesh = new THREE.Group();
+    gameobj.mesh.rotation.order = "YXZ";
+    gameobj.mesh.add(new THREE.Mesh( gameobj.geometry, gameobj.material ));
+    gameobj.mesh.name = gameobj.model;
+    gameobj.mesh.envGameObject = gameobj;
+
     GameObject.loadTexture(gameobj.texture, function(texture) {
         self.material = new THREE.MeshBasicMaterial({map:texture, side:THREE.DoubleSide});
         gameobj.mesh.children.forEach(function(c) {
             c.material = gameobj.material;
         });
         
-    });    
-
-    gameobj.mesh = new THREE.Group();
-    gameobj.mesh.rotation.order = "YXZ";
-    gameobj.mesh.add(new THREE.Mesh( gameobj.geometry, gameobj.material ));
-    gameobj.mesh.name = gameobj.model;
-    gameobj.mesh.envGameObject = gameobj;
+    });
 
     gameobj.update = function() {
 
