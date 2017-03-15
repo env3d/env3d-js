@@ -8,125 +8,59 @@
         <script src="js/j4ts-0.2.0-SNAPSHOT/bundle.js"></script>
         <script src="js/env3d.js"></script>
         <script src="js/bundle.js"></script>
+        
         <script type="text/javascript">
-         
-         function Game() {
-             
-             var ENV = new env3d.Env(false);
-             
-             ENV.setDefaultControl(false);
-
-             var dynamicClasses = [];
-             var client = new XMLHttpRequest();
-             client.open('GET', 'world.txt');
-             client.onreadystatechange = function(state) {
-                 if (client.readyState == 4) {
-                     // parse the csv file
-                     var lines = client.responseText.split('\n');
-                     lines.forEach(function(line) {                     
-                         console.log(line);
-                         var tokens = line.split(',');
-                         switch(tokens[0]) {
-                             case 'skybox':
-                                 ENV.setSky(tokens[1]);
-                                 break;
-                             case 'camera':
-                                 
-                                 ENV.cameraX = parseFloat(tokens[1]);
-                                 ENV.cameraY = parseFloat(tokens[2]);
-                                 ENV.cameraZ = parseFloat(tokens[3]);
-                                 
-                                 ENV.cameraPitch = parseFloat(tokens[5]);
-                                 ENV.cameraYaw = parseFloat(tokens[4]);
-                                 break;
-                             case 'terrain':
-                                 ENV.setTerrain(tokens[3]);
-                                 break;
-                             case 'object':
-                                 var objClass = tokens[10];
-                                 // Keep a list of all the classes that is required for the scene
-                                 dynamicClasses.push(window[objClass]);
-                                 //console.log("Creating GameObject of class "+objClass);
-                                 //var gameObject = eval('new '+objClass+'()');                                 
-                                 var gameObject = new window[objClass](
-                                     parseFloat(tokens[1]),
-                                     parseFloat(tokens[2]),
-                                     parseFloat(tokens[3])
-                                 );
-                                 console.log(gameObject);
-                                 gameObject.scale = parseFloat(tokens[4]);
-
-                                 gameObject.rotateX = parseFloat(tokens[5]);
-                                 gameObject.rotateY = parseFloat(tokens[6]);
-                                 gameObject.rotateZ = parseFloat(tokens[7]);
-
-                                 gameObject.model = tokens[8];
-                                 gameObject.texture = tokens[9];
-
-                                 ENV.addObject(gameObject);
-
-                             default:
-                                 //console.warn('unable to parse line',line);
-                         }
-                     });
-                 }
-             } 
-             client.send();
-
-             ENV.start();
-
-             // Now we load all the models from all the dynamicClasses
-             var models = [];
-             dynamicClasses.forEach(function(animatedModel) {
-                 var m = new animatedModel();
-                 m.modelsMap.values().toArray().forEach(function(list) {
-                     console.log("preload",list);
-                     list.forEach(function(model){
-                         console.log("preload",model);
-                         models.push(model);
-                     });
-                 });
-             });
-             
-             // create a dummy object and assign it each model from each class
-             var i = 0;
-             var obj = {x:5,y:5,z:5,texture:"textures/black.png"};
-             ENV.addObject(obj);
-             console.log("preload", obj);
-             
-             // preload all the models into video memory by running assigning it
-             // into a dummy object for display
-             ENV.preload = true;             
-             var preload = function() {                 
-                 if (i < models.length-1) {
-                     obj.model = models[i++];
-                     // might as well display the percentage
-                     ENV.setDisplayStr(parseInt(i / models.length * 100) + "%");
-                 } else {
-                     ENV.removeObject(obj);
-                     ENV.preload = false;
-                     ENV.loop = play;
-                 }
-             }
-
+                  
+         function Scene() {
              // The actual play method is simply moving all the objects
              // gameplay logic is inside each of the gameobjects
-             var play = function() {
-                 ENV.gameObjects.forEach(function(obj) {
+             this.play = function() {
+                 this.env.gameObjects.forEach(function(obj) {
                      obj.move();
                  });                 
-             }
+             }.bind(this);
 
-             ENV.loop = preload;
+             this.start = function() {
+                 window.addEventListener("env3dready", function() {
+                     this.env.loop = this.play;
+                 }.bind(this));                 
+             }.bind(this);
              
+             this.env = new env3d.Env(false);
+             
+             this.env.setDefaultControl(false);
+
+             this.env.setupWorld("world.txt");             
          }
-         
+
+         function playGame() {
+             console.log("playGame");
+             var game = new Game();
+
+             game.setup();
+             
+             var env = game.env || new env3d.Env();
+             
+             env.loop = game.loop.bind(game);             
+             env.start();
+         }         
 
          window.addEventListener("load", function() {
-             var game = new Game();
-             
+             if (window['Game']) {
+                 playGame();
+             } else {
+                 var game = new Scene();
+                 game.start();
+             }
+
+             document.getElementById("fs").addEventListener('click', function() {
+                 var elem = document.body;
+                 var fs = elem.requestFullScreen || elem.webkitRequestFullScreen;
+                 console.log("fs",fs);
+                 fs.bind(elem).call();                 
+             });
          });
-         
+        
         </script>
         <style>
          body {
@@ -149,6 +83,7 @@
             </div>
             <button env3d-key="KEY_A">A</button>
             <button env3d-key="KEY_D">D</button>
+            <button id="fs">fs</button>
         </div>        
     </body>
 </html>

@@ -1,0 +1,162 @@
+<html>
+    <!-- Entry point for scenecreator based applications -->
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"> 
+
+        <script src="js/j4ts-0.2.0-SNAPSHOT/bundle.js"></script>
+        <script src="js/env3d.js"></script>
+        <script src="js/bundle.js"></script>
+
+        <script>
+         var WebVRConfig = {
+             // Prevents the polyfill from initializing automatically.
+             DEFER_INITIALIZATION: false,
+             // Ensures the polyfill is always active when initialized, even if the
+             // native API is available. This is probably NOT what most pages want.
+             ALWAYS_APPEND_POLYFILL_DISPLAY: true,
+             BUFFER_SCALE: 0.5
+         } 
+
+        </script>
+        <script src="js/webvr-polyfill.min.js"></script>
+        
+        <script type="text/javascript">
+         
+         //InitializeWebVRPolyfill();
+         
+         function EnvVRController(env) {
+             
+             var angle = new THREE.Euler();
+             var q = new THREE.Quaternion();
+             var data = new VRFrameData();
+             var vrDisplay = null;
+
+             navigator.getVRDisplays().then(function(displays) {
+                 console.log("Setting vrDisplay");
+                 vrDisplay = displays[0];
+                 vrDisplay.resetPose();
+
+                 this.vrAnimationFrame();
+             }.bind(this)).catch(function(err) {
+                 console.log("Error with VR displays",err);
+             });
+
+             function fsEvent(e) {
+                 var fselem = document.fullscreenElement ||
+                              document.webkitFullscreenElement ||
+                              document.mozFullscreenElement;
+                 if (fselem) {
+                     document.getElementById("vr").setAttribute("fullscreen", true);
+                     env.stereo = true;
+                 } else {
+                     document.getElementById("vr").removeAttribute("fullscreen");
+                     env.stereo = false;
+                 }
+             }
+             
+             
+             document.addEventListener("webkitfullscreenchange", fsEvent);
+             document.addEventListener("mozfullscreenchange", fsEvent);
+             document.addEventListener("fullscreenchange", fsEvent);
+             document.getElementById("vr").addEventListener('click', function(e) {
+                 var elem = document.body;
+                 var fs = elem.requestFullScreen || elem.webkitRequestFullScreen || elem.mozRequestFullScreen;
+                 fs.bind(elem).call();                 
+             });
+              
+             this.vrAnimationFrame = function() {                 
+                 vrDisplay.getFrameData(data);                 
+                 q.set(data.pose.orientation[0],
+                       data.pose.orientation[1],
+                       data.pose.orientation[2],
+                       data.pose.orientation[3]);
+                 
+                 angle.setFromQuaternion(q, 'YXZ');            
+                 
+                 var yaw = angle.y * 180/Math.PI;
+                 var pitch = angle.x * 180/Math.PI;
+                 var roll = angle.z * 180/Math.PI;                 
+                 env.setCameraYaw(yaw);
+                 env.setCameraPitch(pitch);
+                 env.setCameraRoll(roll);
+                 env.setDisplayStr(env.getKeyDown(179));
+                 vrDisplay.requestAnimationFrame(this.vrAnimationFrame);
+             }.bind(this);
+                              
+         }
+         
+         function Scene() {
+             // The actual play method is simply moving all the objects
+             // gameplay logic is inside each of the gameobjects
+             this.play = function() {
+                 this.env.gameObjects.forEach(function(obj) {
+                     obj.move();
+                 });                 
+             }.bind(this);
+             
+             this.start = function() {
+                 window.addEventListener("env3dready", function() {
+                     this.env.loop = this.play;
+                 }.bind(this));                 
+             }.bind(this);
+
+             this.env = new env3d.Env(false);
+             EnvVRController(this.env);
+             
+             this.env.setDefaultControl(false);
+
+             // setupWorld will load the world file and dispatch the
+             // env3dready event when everything is loaded
+             this.env.setupWorld("world.txt");
+         }
+
+         function playGame() {
+             console.log("playGame");
+             var game = new Game();
+
+             game.setup();
+             
+             var env = game.env || new env3d.Env();
+             EnvVRController(env);
+             
+             env.loop = game.loop.bind(game);
+             env.start();
+         }         
+
+         window.addEventListener("load", function() {
+             if (window['Game']) {
+                 playGame();
+             } else {
+                 var game = new Scene();
+                 game.start();
+             }
+         });
+         
+        
+        </script>
+        <style>
+         body {
+             margin: 0;
+             padding: 0;
+         }
+         canvas {
+             display: block;
+         }
+         #vr {
+             position: fixed;
+             z-index: 1;
+             top: 10px;
+             left: 10px;
+             width: 80px;
+             height: 50px;
+         }
+         #vr[fullscreen] {
+             display: none;
+         }
+        </style>
+    </head>
+    <body>
+        <div id="env3d"></div>
+        <button id="vr">VR</button>
+    </body>
+</html>

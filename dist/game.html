@@ -17,13 +17,7 @@
 
              game.setup();
              
-             var env;
-             if (game.env) {
-                 env = game.env;
-             } else {
-                 env = new env3d.Env();
-             }
-            
+             var env = game.env || new env3d.Env();            
              env.loop = game.loop.bind(game);             
              env.start();
          }

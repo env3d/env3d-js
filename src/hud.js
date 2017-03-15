@@ -3,12 +3,18 @@ var Keyboard = require('./lwjgl-keyboard.js');
 
 var Hud = function(env, width, height) {
     this.scene = new THREE.Scene();
-    
+
+
+    /*
     this.camera = new THREE.OrthographicCamera(
         (-width/2), width/2,
         height/2, -height/2,
-        0, 30
+        0.1, 30
     );
+    */
+
+
+    this.camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 10000 );
     
     this.hudCanvas = document.createElement('canvas');
     this.hudCanvas.width = width; 
@@ -36,10 +42,10 @@ var Hud = function(env, width, height) {
 
     
     this.planeGeometry = new THREE.PlaneGeometry( width, height );
-    
-    this.scene.add(
-        new THREE.Mesh( this.planeGeometry, this.material )
-    );
+    var mesh = new THREE.Mesh( this.planeGeometry, this.material )
+    mesh.position.set(0,0,-1);
+    mesh.scale.set(0.001,0.001,0.001);
+    this.scene.add(mesh);
 
     var touching = false;
     // --- Screen touch  handlers ---

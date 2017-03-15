@@ -2,6 +2,8 @@ THREE = require('three');
 
 require('../node_modules/three/examples/js/renderers/SoftwareRenderer.js');
 require('../node_modules/three/examples/js/renderers/Projector.js');
+require('../node_modules/three/examples/js/effects/StereoEffect.js');
+//require('../node_modules/three/examples/js/effects/VREffect.js');
 
 var EnvGameObject = require('./GameObject.js');
 var DefaultRoom = require('./DefaultRoom.js');
@@ -9,6 +11,7 @@ var Keyboard = require('./lwjgl-keyboard.js');
 var Hud = require('./hud.js');
 var DefaultControlHandlers = require('./DefaultControlHandlers.js');
 var Detector = require('../node_modules/three/examples/js/Detector.js');
+var LoadWorld = require('./LoadWorld.js');
 
 // If defaultRoom is true, create one
 var Env = function(defaultRoom) {
@@ -21,9 +24,8 @@ var Env = function(defaultRoom) {
 
     // First create the HUD scene and camera
 
-    //this.hud = new Hud(this, window.innerWidth, window.innerHeight);
-
     this.hud = new Hud(this, 512, 512);
+    this.setupWorld = LoadWorld;
 
     // Allow cross origin loading of images
     THREE.ImageUtils.crossOrigin = 'Anonymous';
@@ -36,6 +38,7 @@ var Env = function(defaultRoom) {
 
     this.camera.rotation.x = this.cameraPitch = 0;
     this.camera.rotation.y = this.cameraYaw = 0;
+    this.camera.rotation.z = this.cameraRoll = 0;    
 
     defaultControlHandlers = new DefaultControlHandlers(this);
     this.defaultControl = true;
@@ -55,7 +58,15 @@ var Env = function(defaultRoom) {
         this.renderer.autoClear = false;
     } else {
         this.renderer = new THREE.SoftwareRenderer();
-    }    
+    }
+
+    // Turn this on for stereo rendering
+    this.stereo = false;
+    if (THREE.StereoEffect) {
+        this.stereoEffect = new THREE.StereoEffect(this.renderer);
+        //this.stereoEffect = new THREE.VREffect(this.renderer);
+        this.stereoEffect.setSize( window.innerWidth, window.innerHeight );
+    }
 
     this.renderer.setSize( window.innerWidth, window.innerHeight );
 
@@ -72,8 +83,7 @@ var Env = function(defaultRoom) {
     this.mouseY = 0;
     this.mouseDX = 0;
     this.mouseDY = 0;
-
-    this.preload = false;
+    
     
     var light = new THREE.DirectionalLight( 0xffffff, 1.5 );
     light.position.set( 0, -4, -4 ).normalize();
@@ -103,6 +113,7 @@ var Env = function(defaultRoom) {
 	this.camera.aspect = window.innerWidth / window.innerHeight;
 	this.camera.updateProjectionMatrix();
 	this.renderer.setSize( window.innerWidth, window.innerHeight );
+        this.stereoEffect.setSize( window.innerWidth, window.innerHeight );
     }.bind(this), false);
 }
 
@@ -280,10 +291,16 @@ Env.prototype.start = function() {
     ENV.camera.position.z = ENV.cameraZ;
     ENV.camera.rotation.x = ENV.cameraPitch * (Math.PI / 180);
     ENV.camera.rotation.y = ENV.cameraYaw * (Math.PI / 180);
+    ENV.camera.rotation.z = ENV.cameraRoll * (Math.PI / 180);    
 
-    ENV.renderer.render(ENV.scene, ENV.camera);
+    var renderer = ENV.renderer;
+    if (ENV.stereo) {
+        renderer = this.stereoEffect;
+    }
+    
+    renderer.render(ENV.scene, ENV.camera);
     if (Detector.webgl) {
-        ENV.renderer.render(this.hud.scene, this.hud.camera);
+        renderer.render(this.hud.scene, this.hud.camera);
     }
     
     ENV.loop();
@@ -376,6 +393,7 @@ Env.prototype.setCameraPosition = function(cameraPosition) {
 Env.prototype.setCameraRotation = function(cameraRotation) {
     this.cameraPitch = cameraRotation.x;
     this.cameraYaw = cameraRotation.y;
+    this.cameraRoll = cameraRotation.z;    
 }
 
 Env.prototype.setCameraXYZ = function(x, y, z) {
@@ -390,6 +408,10 @@ Env.prototype.setCameraPitch = function(pitch) {
 
 Env.prototype.setCameraYaw = function(yaw) {
     this.cameraYaw = yaw;
+}
+
+Env.prototype.setCameraRoll = function(roll) {
+    this.cameraRoll = roll;
 }
 
 Env.prototype.getCameraYaw = function() {
