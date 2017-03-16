@@ -5,7 +5,7 @@
   "main": "build/env3d.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "ugly": "uglifyjs dist/js/env3d.js dist/js/j4ts-0.2.0-SNAPSHOT/bundle.js -o dist/bundle.js -c -m",
+    "ugly": "uglifyjs dist/js/env3d.js dist/js/j4ts-0.2.0-SNAPSHOT/bundle.js -o dist/js/env3d.min.js -c -m",
     "build": "browsify src/env3d.js -o dist/js/env3d.js -d",
     "watch": "watchify src/env3d.js -o dist/js/env3d.js -d",
     "lite": "cd dist; lite-server",
