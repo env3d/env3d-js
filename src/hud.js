@@ -103,8 +103,10 @@ var Hud = function(env, width, height) {
     }
 
     var touchup = function(e) {
+        console.log("touchup", e);
         var keycode = Keyboard[this.getAttribute("env3d-key")];        
         env.keys[keycode] = false;
+        env.lastKeyDown = 0;        
         e.preventDefault();
         e.stopPropagation();        
     }    
