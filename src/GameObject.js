@@ -34,7 +34,7 @@ GameObject.loadObj = function (model, callback) {
     }
 }
 GameObject.loadTexture = function(texture, callback) {
-    texture = env3d.Env.baseAssetsUrl+texture;    
+    texture = env3d.Env.baseAssetsUrl+texture;
     if (GameObject.texturesCache[texture]) {
         callback.call(null,GameObject.texturesCache[texture]);
     } else {

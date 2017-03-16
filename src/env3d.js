@@ -156,24 +156,62 @@ Env.prototype.setSky = function(path) {
 }
 
 Env.prototype.setTerrain = function(textureFile) {
-    var texture = THREE.ImageUtils.loadTexture(Env.baseAssetsUrl+textureFile);
-    texture.wrapS = THREE.RepeatWrapping; 
-    texture.wrapT = THREE.RepeatWrapping;
-    
-    // how many times to repeat in each direction; the default is (1,1),
-    //   which is probably why your example wasn't working
-    texture.repeat.set( 100, 100 ); 
-    var terrainMesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(1000,1000),
-        new THREE.MeshBasicMaterial( {
-            map: texture,
-            side: THREE.DoubleSide
-        } )           
-    );
-
-    terrainMesh.rotation.x = -Math.PI/2;
-    this.scene.add(terrainMesh);
+    EnvGameObject.loadTexture(textureFile, function(texture) {
+        texture.wrapS = THREE.RepeatWrapping; 
+        texture.wrapT = THREE.RepeatWrapping;
+        
+        // how many times to repeat in each direction; the default is (1,1),
+        //   which is probably why your example wasn't working
+        texture.repeat.set( 100, 100 ); 
+        var terrainMesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(1000,1000),
+            new THREE.MeshBasicMaterial( {
+                map: texture,
+                side: THREE.DoubleSide
+            } )
+        );
+        
+        terrainMesh.rotation.x = -Math.PI/2;
+        this.scene.add(terrainMesh);        
+    }.bind(this));
 };
+
+// Helper function for creating a wall within a square room
+function createWallMesh(direction, room, material) {
+    var geometry;
+    var position = new THREE.Vector3(0,0,0);
+    var rotation = new THREE.Vector3(0,0,0);
+    if (direction.search("North") > -1) {
+        geometry = new THREE.PlaneGeometry(room.width,room.height);
+        position.set(room.width/2, room.height/2, 0);
+    } else if (direction.search("East") > -1) {
+        geometry = new THREE.PlaneGeometry(room.depth,room.height);
+        rotation.set(0, -Math.PI/2, 0);
+        position.set(room.width, room.height/2, room.depth/2);
+    } else if (direction.search("West") > -1) {
+        geometry = new THREE.PlaneGeometry(room.depth,room.height);
+        rotation.set(0, Math.PI/2, 0);
+        position.set(0, room.height/2, room.depth/2);
+    } else if (direction.search("South") > -1) {
+        geometry = new THREE.PlaneGeometry(room.width,room.height);
+        rotation.set(0, Math.PI, 0);
+        position.set(room.width/2, room.height/2, room.depth);
+    } else if (direction.search("Bottom") > -1) {
+        geometry = new THREE.PlaneGeometry(room.width,room.depth);
+        rotation.set(-Math.PI/2, 0, 0);
+        position.set(room.width/2, 0, room.depth/2);
+    } else if (direction.search("Top") > -1) {
+        geometry = new THREE.PlaneGeometry(room.width,room.depth);
+        rotation.set(Math.PI/2, 0, 0);
+        position.set(room.width/2, room.height, room.depth/2);
+    }
+    var mesh = new THREE.Mesh(
+        geometry, material
+    );
+    mesh.position.set(position.x, position.y, position.z);
+    mesh.rotation.set(rotation.x, rotation.y, rotation.z);
+    return mesh;
+}
 
 Env.prototype.setRoom = function(room) {
     console.log("clearing scene");
@@ -195,56 +233,21 @@ Env.prototype.setRoom = function(room) {
     }
 
     for (var direction in room) {
-	if (direction.search("texture") > -1 && room[direction] != null) {
-	    var wall = new THREE.PlaneGeometry();
-            var textureUrl = Env.baseAssetsUrl+room[direction];
-	    var wallMat = new THREE.MeshBasicMaterial( {                
-                map: THREE.ImageUtils.loadTexture(textureUrl),
-                side: THREE.DoubleSide
-                //side: THREE.FrontSide
-            } );		
-	    var wallMesh = new THREE.Mesh(wall, wallMat);
-            console.log(wallMesh);
-            
-            console.log("Room dimensions:"+room.height+" "+room.width);
-	    if (direction.search("North") > -1) {
-                wallMesh.geometry = new THREE.PlaneGeometry(room.width,room.height);
-		wallMesh.position.x = room.width/2;
-                wallMesh.position.y = room.height/2;
-	    } else if (direction.search("East") > -1) {
-                wallMesh.geometry = new THREE.PlaneGeometry(room.depth,room.height);
-		wallMesh.rotation.y = -Math.PI/2;
-		wallMesh.position.x = room.width;
-		wallMesh.position.y = room.height/2;
-		wallMesh.position.z = room.depth/2;
-	    } else if (direction.search("West") > -1) {
-                wallMesh.geometry = new THREE.PlaneGeometry(room.depth,room.height);                
-		wallMesh.rotation.y = Math.PI/2;
-		wallMesh.position.y = room.height/2;
-		wallMesh.position.z = room.depth/2;
-	    } else if (direction.search("South") > -1) {
-                wallMesh.geometry = new THREE.PlaneGeometry(room.width,room.height);
-		wallMesh.rotation.y = Math.PI;                
-		wallMesh.position.x = room.width/2;
-		wallMesh.position.y = room.height/2;
-		wallMesh.position.z = room.depth;
-	    } else if (direction.search("Bottom") > -1) {
-                wallMesh.geometry = new THREE.PlaneGeometry(room.width,room.depth);
-                wallMesh.rotation.x = -Math.PI/2;
-		wallMesh.position.x = room.width/2;
-		wallMesh.position.z = room.depth/2;
-	    } else if (direction.search("Top") > -1) {
-                wallMesh.geometry = new THREE.PlaneGeometry(room.width,room.depth);                
-                wallMesh.rotation.x = Math.PI/2;
-		wallMesh.position.x = room.width/2;
-		wallMesh.position.z = room.depth/2;
-		wallMesh.position.y = room.height;
-	    }
-            this.room.add(wallMesh);
-            
+	if (direction.search("texture") > -1 && room[direction] != null) {            
+            EnvGameObject.loadTexture(room[direction], function(texture) {
+                var material = new THREE.MeshBasicMaterial({
+                    map: texture,
+                    side: THREE.DoubleSide
+                });                
+                var wall = createWallMesh(this.d, this.r, material);
+                this.room.add(wall);
+            }.bind({
+                d: direction,
+                r: room,
+                room: this.room
+            }));
 	}
     }
-
 }
 
 Env.prototype.addObject = function(obj) {

@@ -26,6 +26,7 @@
              var env = new env3d.Env();
 
              console.log(env);
+             
              env.setRoom({
                  textureNorth: "textures/floor.png",
                  textureTop: null,
@@ -33,6 +34,7 @@
                  height: 20,
                  depth: 2
              });
+             
              env.addObject(new Cube());
              env.start();
          });
