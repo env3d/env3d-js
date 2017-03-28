@@ -182,8 +182,9 @@ var org;
 org.lwjgl.input.Keyboard.KEY_RWIN_$LI$();
 org.lwjgl.input.Keyboard.KEY_LWIN_$LI$();
 
+// put the org namespace directly into the global namespace
 window['org'] = org;
-
+window['Keyboard'] = org.lwjgl.input.Keyboard;
 
 var Keyboard = {
     // reassign for web
@@ -194,5 +195,6 @@ var Keyboard = {
     KEY_L : 76,
     KEY_S : 83                
 }
-// We will also create a keyboard class for web use
+
+// We will also create a keyboard class for other node modules to use
 module.exports = org.lwjgl.input.Keyboard;

@@ -122,6 +122,7 @@ var Hud = function(env, width, height) {
 }
 
 Hud.prototype.write = function(str) {
+    str = str || "";
     if (this.str != str) {
         this.str = str;
         this.hudBitmap.clearRect(0,0,this.hudCanvas.width, this.hudCanvas.height);
