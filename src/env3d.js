@@ -104,7 +104,7 @@ var Env = function(defaultRoom) {
     }).bind(this));
 
     document.addEventListener('keydown', (function(e) {
-        this.setDisplayStr(e.charCode+" "+e.which+" "+e.keyCode);
+        //this.setDisplayStr(e.charCode+" "+e.which+" "+e.keyCode);
         this.lastKeyDown = e.keyCode;
         this.keys[e.keyCode] = true;
     }).bind(this));
