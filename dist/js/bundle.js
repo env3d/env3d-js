@@ -340,11 +340,11 @@ var LongHouse = (function (_super) {
                 scale -= 3;
             }
         }
-        for (var index121 = this.getEnv().getObjects(Actor).iterator(); index121.hasNext();) {
-            var z = index121.next();
+        for (var index128 = this.getEnv().getObjects(Actor).iterator(); index128.hasNext();) {
+            var z = index128.next();
             {
-                for (var index122 = 0; index122 < this.collisionNode.length; index122++) {
-                    var cNode = this.collisionNode[index122];
+                for (var index129 = 0; index129 < this.collisionNode.length; index129++) {
+                    var cNode = this.collisionNode[index129];
                     {
                         if (z.distance(cNode) < cNode.getScale() + z.getScale()) {
                             if (z != null && z instanceof Zombie) {
@@ -391,8 +391,8 @@ var Mountain = (function (_super) {
         if (hunter.distance(this) < hunter.getScale() + this.getScale()) {
             hunter.revert();
         }
-        for (var index123 = this.getEnv().getObjects(Zombie).iterator(); index123.hasNext();) {
-            var z = index123.next();
+        for (var index130 = this.getEnv().getObjects(Zombie).iterator(); index130.hasNext();) {
+            var z = index130.next();
             {
                 if (z.distance(this) < this.getScale() + z.getScale()) {
                     z.setRotateY(z.getRotateY() + 180);
@@ -535,8 +535,8 @@ var Hunter = (function (_super) {
             bulletScale = bulletScale + (this.miniMath.getTimeRemain() / 150.0);
         }
         this.miniMath.reset();
-        for (var index124 = this.getEnv().getObjects(Zombie).iterator(); index124.hasNext();) {
-            var zombie = index124.next();
+        for (var index131 = this.getEnv().getObjects(Zombie).iterator(); index131.hasNext();) {
+            var zombie = index131.next();
             {
                 if (zombie.distance(this) < 20 && !zombie.isDead()) {
                     zombie.turnToFace(this);
@@ -546,8 +546,8 @@ var Hunter = (function (_super) {
         }
         for (var i = 0; i < this.gunRange.length; i++) {
             var bullet = this.gunRange[i];
-            for (var index125 = this.getEnv().getObjects(Zombie).iterator(); index125.hasNext();) {
-                var zombie = index125.next();
+            for (var index132 = this.getEnv().getObjects(Zombie).iterator(); index132.hasNext();) {
+                var zombie = index132.next();
                 {
                     var weaponX = this.getX() + i * Math.sin(/* toRadians */ (function (x) { return x * Math.PI / 180; })(this.getRotateY()));
                     var weaponZ = this.getZ() + i * Math.cos(/* toRadians */ (function (x) { return x * Math.PI / 180; })(this.getRotateY()));
@@ -574,8 +574,8 @@ var Hunter = (function (_super) {
      * Check short range target
      */
     Hunter.prototype.checkMeleeHit = function () {
-        for (var index126 = this.getEnv().getObjects(Zombie).iterator(); index126.hasNext();) {
-            var z = index126.next();
+        for (var index133 = this.getEnv().getObjects(Zombie).iterator(); index133.hasNext();) {
+            var z = index133.next();
             {
                 if (z.distance(this) < this.meleeRange + z.getScale() + this.getScale() && !z.isDead()) {
                     if (this.shield != null) {

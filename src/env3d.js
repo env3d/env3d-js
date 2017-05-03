@@ -520,6 +520,40 @@ Env.prototype.getObjects = function() {
     return gameObjectsArrayList;
 }
 
+// Returns a list of objects projected from
+// x and y screen coordinates
+var mouse = new THREE.Vector2();
+var raycaster = new THREE.Raycaster();
+var pickObjects = [];
+Env.prototype.getPick = function(x, y) {
+    // convert to 3D coordinates
+
+    pickObjects.length = 0;
+    mouse.x = ( x / window.innerWidth ) * 2 - 1;
+    mouse.y = - ( y / window.innerHeight ) * 2 + 1;
+    raycaster.setFromCamera(mouse, this.camera);
+
+    var camera = this.camera;
+    this.gameObjects.forEach(function(obj) {
+        var intersects = raycaster.intersectObjects(obj.mesh.children);
+        if (intersects.length > 0) {
+            // for each object, we calculate the distance to the camera
+            pickObjects.push({
+                dist: camera.position.distanceTo(obj.mesh.position),
+                obj: obj
+            });
+        }
+    });
+    
+    // finds the closest to the camera    
+    if (pickObjects.length > 0) {
+        pickObjects.sort(function(a,b){return a.dist - b.dist});
+        return pickObjects[0].obj;
+    }
+    
+    return null;
+}
+
 // The user will override this method to put in custom code
 Env.prototype.loop = function() {}
 

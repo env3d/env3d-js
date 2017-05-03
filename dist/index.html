@@ -36,8 +36,24 @@
              });
              
              env.addObject(new Cube());
+
+             env.addObject({
+                 x: 5,
+                 y: 2,
+                 z: 1
+             });
              env.start();
+
+             console.log(env.gameObjects);
+             env.loop = function() {                
+                 var object = env.getPick(env.getMouseX(), env.getMouseY());
+                 if (object) {
+                     object.rotateY += 1;
+                 }
+             };
          });
+
+         
         </script>
         <style>
          body {
