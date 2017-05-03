@@ -28,6 +28,7 @@ var Env = function(defaultRoom) {
 
     // Allow cross origin loading of images
     THREE.ImageUtils.crossOrigin = 'Anonymous';
+    THREE.CubeTextureLoader.crossOrigin = 'Anonymous';
     
     // The real scene and camera
     this.camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 10000 );
