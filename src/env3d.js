@@ -28,7 +28,6 @@ var Env = function(defaultRoom) {
 
     // Allow cross origin loading of images
     THREE.ImageUtils.crossOrigin = 'Anonymous';
-    THREE.CubeTextureLoader.crossOrigin = 'Anonymous';
     
     // The real scene and camera
     this.camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 10000 );
@@ -146,7 +145,8 @@ Env.prototype.setDefaultControl = function(control) {
 
 Env.prototype.setSky = function(path) {
     if (!path.endsWith('/')) path += '/';
-    var loader = new THREE.CubeTextureLoader();        
+    var loader = new THREE.CubeTextureLoader();
+    loader.setCrossOrigin('Anonymous');
     loader.setPath(Env.baseAssetsUrl+path);
     var textureCube = loader.load( [
 	'east.png', 'west.png',
