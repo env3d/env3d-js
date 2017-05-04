@@ -528,10 +528,16 @@ var raycaster = new THREE.Raycaster();
 var pickObjects = [];
 Env.prototype.getPick = function(x, y) {
     // convert to 3D coordinates
-
     pickObjects.length = 0;
-    mouse.x = ( x / window.innerWidth ) * 2 - 1;
-    mouse.y = - ( y / window.innerHeight ) * 2 + 1;
+
+    if (x && y) {
+        mouse.x = ( x / window.innerWidth ) * 2 - 1;
+        mouse.y = - ( y / window.innerHeight ) * 2 + 1;
+    } else {
+        mouse.x = 0;
+        mouse.y = 0;
+    }
+    
     raycaster.setFromCamera(mouse, this.camera);
 
     var camera = this.camera;
