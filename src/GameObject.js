@@ -23,7 +23,9 @@ GameObject.modelsCache = {};
 GameObject.texturesCache = {};
 
 GameObject.loadObj = function (model, callback) {
-    model = env3d.Env.baseAssetsUrl+model;
+    if (!model.startsWith('http')) {
+        model = env3d.Env.baseAssetsUrl+model;
+    }
     if (GameObject.modelsCache[model]) {
         callback.call(null,GameObject.modelsCache[model]);
     } else {
@@ -34,7 +36,9 @@ GameObject.loadObj = function (model, callback) {
     }
 }
 GameObject.loadTexture = function(texture, callback) {
-    texture = env3d.Env.baseAssetsUrl+texture;
+    if (!texture.startsWith('http')) {
+        texture = env3d.Env.baseAssetsUrl+texture;
+    }
     if (GameObject.texturesCache[texture]) {
         callback.call(null,GameObject.texturesCache[texture]);
     } else {

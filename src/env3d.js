@@ -147,7 +147,11 @@ Env.prototype.setSky = function(path) {
     if (!path.endsWith('/')) path += '/';
     var loader = new THREE.CubeTextureLoader();
     loader.setCrossOrigin('Anonymous');
-    loader.setPath(Env.baseAssetsUrl+path);
+    if (path.startsWith('http')) {
+        loader.setPath(path);
+    } else {
+        loader.setPath(Env.baseAssetsUrl+path);
+    }
     var textureCube = loader.load( [
 	'east.png', 'west.png',
 	'top.png', 'bottom.png',
