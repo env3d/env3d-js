@@ -71,7 +71,7 @@ GameObject.patchGameObject = function patchFun(gameobj) {
     // have to remap the uv to map things properly
     // http://stackoverflow.com/questions/21663923/mapping-image-onto-a-sphere-in-three-js
     var faceVertexUvs = gameobj.geometry.faceVertexUvs[ 0 ];    
-    for ( i = 0; i < faceVertexUvs.length; i ++ ) {   
+    for (var i = 0; i < faceVertexUvs.length; i ++ ) {   
 	var uvs = faceVertexUvs[ i ];
 	for ( var j = 0; j < 3; j ++ ) {
             uvs[j].x += 0.25;
