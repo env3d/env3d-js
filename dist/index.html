@@ -24,7 +24,8 @@
          window.addEventListener('load', function() {
 
              var env = new env3d.Env();
-
+             
+             window['env'] = env;
              console.log(env);
              
              env.setRoom({
@@ -52,6 +53,7 @@
                      object.rotateY += 1;
                  }
              };
+
          });
 
          

@@ -568,6 +568,8 @@ Env.prototype.getPick = function(x, y) {
 // Allow accelerometer to control camera's pitch, yaw, and roll
 // and render using stereo effect
 Env.prototype.initVRController = function() {
+
+    this.crosshair(true);
     
     var angle = new THREE.Euler();
     var q = new THREE.Quaternion();
@@ -630,8 +632,48 @@ Env.prototype.initVRController = function() {
         env.setCameraPitch(pitch);
         env.setCameraRoll(roll);
         vrDisplay.requestAnimationFrame(this.vrAnimationFrame);
-    }.bind(this);    
+    }.bind(this);        
+}
+
+var crosshair;
+Env.prototype.crosshair = function(enabled) {
+    if (!crosshair) {
+        var material = new THREE.LineBasicMaterial({
+            linewidth: 2,
+            color: 0xFFFFFF,
+        }); 
+        
+        // crosshair size
+        var x = 0.005, y = 0.005;
+        
+        var geometry = new THREE.Geometry(); 
+
+        // crosshair
+        geometry.vertices.push(new THREE.Vector3(0, y, 0)); 
+        geometry.vertices.push(new THREE.Vector3(0, -y, 0));
+        geometry.vertices.push(new THREE.Vector3(0, 0, 0)); 
+        geometry.vertices.push(new THREE.Vector3(x, 0, 0));     
+        geometry.vertices.push(new THREE.Vector3(-x, 0, 0)); 
+
+        crosshair = new THREE.Line( geometry, material );
+
+        // place it in the center 
+        var crosshairPercentX = 50; 
+        var crosshairPercentY = 50; 
+        var crosshairPositionX = (crosshairPercentX / 100) * 2 - 1; 
+        var crosshairPositionY = (crosshairPercentY / 100) * 2 - 1; 
+
+        crosshair.position.x = crosshairPositionX * this.camera.aspect; 
+        crosshair.position.y = crosshairPositionY; 
+
+        crosshair.position.z = -0.3;          
+    }
     
+    if (enabled) {
+        this.camera.add(crosshair);
+    } else {
+        this.camera.remove(crosshair);
+    }
 }
 
 // The user will override this method to put in custom code
