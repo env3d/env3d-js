@@ -569,7 +569,7 @@ Env.prototype.getPick = function(x, y) {
 // and render using stereo effect
 Env.prototype.initVRController = function() {
 
-    this.crosshair(true);
+    //this.crosshair(true);
     
     var angle = new THREE.Euler();
     var q = new THREE.Quaternion();
