@@ -43,8 +43,8 @@ var Hud = function(env, width, height) {
     
     this.planeGeometry = new THREE.PlaneGeometry( width, height );
     var mesh = new THREE.Mesh( this.planeGeometry, this.material )
-    mesh.position.set(0,0,-1);
-    mesh.scale.set(0.001,0.001,0.001);
+    mesh.position.set(0,0,-10);
+    mesh.scale.set(0.01,0.01,0.01);
     this.scene.add(mesh);
 
     var touching = false;

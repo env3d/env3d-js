@@ -44,8 +44,11 @@
                  z: 1
              });
              env.start();
-
+             
              env.setSky('textures/skybox/default');
+             
+             //env.initVRController();
+             
              console.log(env.gameObjects);
              env.loop = function() {                
                  var object = env.getPick(env.getMouseX(), env.getMouseY());

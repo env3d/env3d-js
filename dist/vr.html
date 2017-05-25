@@ -50,6 +50,7 @@
              // setupWorld will load the world file and dispatch the
              // env3dready event when everything is loaded
              this.env.setupWorld("world.txt");
+             window['env'] = this.env;
          }
 
          function playGame() {

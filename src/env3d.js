@@ -316,6 +316,15 @@ Env.prototype.start = function() {
 	ENV.gameObjects[i].update();
 	//ENV.gameObjects[i].move();
     }
+    // render the crosshair if available
+    /*
+    if (this.crosshair) {
+        var zCamVec = new THREE.Vector3(0,0,-0.3); 
+        var position = this.camera.localToWorld(zCamVec);
+        this.crosshair.position.set(position.x, position.y, position.z); 
+        this.crosshair.lookAt(this.camera.position);
+    }
+    */
 
     if (this.preload) {
         // in preload mode, update as fast as we can
@@ -569,7 +578,7 @@ Env.prototype.getPick = function(x, y) {
 // and render using stereo effect
 Env.prototype.initVRController = function() {
 
-    //this.crosshair(true);
+    this.setCrosshair(true);
     
     var angle = new THREE.Euler();
     var q = new THREE.Quaternion();
@@ -636,15 +645,16 @@ Env.prototype.initVRController = function() {
 }
 
 var crosshair;
-Env.prototype.crosshair = function(enabled) {
+Env.prototype.setCrosshair = function(enabled) {
     if (!crosshair) {
         var material = new THREE.LineBasicMaterial({
             linewidth: 2,
             color: 0xFFFFFF,
+            depthTest: false
         }); 
         
         // crosshair size
-        var x = 0.005, y = 0.005;
+        var x = 1, y = 1;
         
         var geometry = new THREE.Geometry(); 
 
@@ -663,16 +673,21 @@ Env.prototype.crosshair = function(enabled) {
         var crosshairPositionX = (crosshairPercentX / 100) * 2 - 1; 
         var crosshairPositionY = (crosshairPercentY / 100) * 2 - 1; 
 
+        crosshair.renderOrder = Number.MAX_SAFE_INTEGER;
         crosshair.position.x = crosshairPositionX * this.camera.aspect; 
         crosshair.position.y = crosshairPositionY; 
 
-        crosshair.position.z = -0.3;          
+        crosshair.position.z = -100;
     }
     
     if (enabled) {
-        this.camera.add(crosshair);
+        this.crosshair = crosshair;
+        this.camera.add(this.crosshair);
+        //this.scene.add(this.crosshair);
     } else {
-        this.camera.remove(crosshair);
+        this.camera.remove(this.crosshair);
+        //if (this.crosshair) this.scene.remove(this.crosshair);        
+        this.crosshair = null;        
     }
 }
 
