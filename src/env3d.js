@@ -565,6 +565,75 @@ Env.prototype.getPick = function(x, y) {
     return null;
 }
 
+// Allow accelerometer to control camera's pitch, yaw, and roll
+// and render using stereo effect
+Env.prototype.initVRController = function() {
+    
+    var angle = new THREE.Euler();
+    var q = new THREE.Quaternion();
+    var data = new VRFrameData();
+    var vrDisplay = null;
+    var env = this;
+
+    navigator.getVRDisplays().then(function(displays) {
+        console.log("Setting vrDisplay");
+        vrDisplay = displays[0];
+        vrDisplay.resetPose();
+
+        this.vrAnimationFrame();
+    }.bind(this)).catch(function(err) {
+        console.log("Error with VR displays",err);
+    });
+
+    function fsEvent(e) {
+        var fselem = document.fullscreenElement ||
+                     document.webkitFullscreenElement ||
+                     document.mozFullscreenElement;
+        if (fselem) {
+            document.getElementById("vr").setAttribute("fullscreen", true);
+            env.stereo = true;
+        } else {
+            document.getElementById("vr").removeAttribute("fullscreen");
+            env.stereo = false;
+        }
+    }
+    
+    document.addEventListener("webkitfullscreenchange", fsEvent);
+    document.addEventListener("mozfullscreenchange", fsEvent);
+    document.addEventListener("fullscreenchange", fsEvent);
+    document.getElementById("vr").addEventListener('click', function(e) {
+        var elem = document.body;
+        var fs = elem.requestFullScreen || elem.webkitRequestFullScreen || elem.mozRequestFullScreen;
+        if (fs) {
+            fs.bind(elem).call();
+        } else {
+            // safari mobile doesn't have fullscreen api
+            env.stereo = !env.stereo;
+            window.dispatchEvent(new Event('resize'));
+        }
+    });
+
+    // Attach vrAnimationFrame to the env object so it can be called later
+    this.vrAnimationFrame = function() {                 
+        vrDisplay.getFrameData(data);                 
+        q.set(data.pose.orientation[0],
+              data.pose.orientation[1],
+              data.pose.orientation[2],
+              data.pose.orientation[3]);
+        
+        angle.setFromQuaternion(q, 'YXZ');            
+        
+        var yaw = angle.y * 180/Math.PI;
+        var pitch = angle.x * 180/Math.PI;
+        var roll = angle.z * 180/Math.PI;                 
+        env.setCameraYaw(yaw);
+        env.setCameraPitch(pitch);
+        env.setCameraRoll(roll);
+        vrDisplay.requestAnimationFrame(this.vrAnimationFrame);
+    }.bind(this);    
+    
+}
+
 // The user will override this method to put in custom code
 Env.prototype.loop = function() {}
 
