@@ -67,16 +67,7 @@ GameObject.patchGameObject = function patchFun(gameobj) {
         gameobj._model = gameobj.model;
     }
 
-    gameobj.geometry = new THREE.SphereGeometry( 1, 16, 16 );
-    // have to remap the uv to map things properly
-    // http://stackoverflow.com/questions/21663923/mapping-image-onto-a-sphere-in-three-js
-    var faceVertexUvs = gameobj.geometry.faceVertexUvs[ 0 ];    
-    for (var i = 0; i < faceVertexUvs.length; i ++ ) {   
-	var uvs = faceVertexUvs[ i ];
-	for ( var j = 0; j < 3; j ++ ) {
-            uvs[j].x += 0.25;
-	}
-    }
+    gameobj.geometry = new THREE.SphereGeometry( 1, 16, 16, -Math.PI/2, Math.PI*2, 0, Math.PI );
     gameobj.material = new THREE.MeshBasicMaterial();
 
     var self = gameobj;
