@@ -12,6 +12,7 @@ var Hud = require('./hud.js');
 var DefaultControlHandlers = require('./DefaultControlHandlers.js');
 var Detector = require('../node_modules/three/examples/js/Detector.js');
 var LoadWorld = require('./LoadWorld.js');
+var VideoSphere = require('./VideoSphere.js');
 
 // If defaultRoom is true, create one
 var Env = function(defaultRoom) {
@@ -141,6 +142,18 @@ Env.prototype.setDefaultControl = function(control) {
         document.removeEventListener('mouseup', this.mouseuphandler, false);
         document.removeEventListener('keydown', this.keydownhandler, false);                
     }
+}
+
+// Sets a 360 video as background
+Env.prototype.setBackgroundVideo = function(path) {
+    if (!path.startsWith('http')) {
+        path = Env.baseAssetsUrl+path;
+    }
+    
+    var v = new VideoSphere(path);
+    var m = v.getMesh();
+
+    this.scene.add(m);
 }
 
 Env.prototype.setSky = function(path) {
