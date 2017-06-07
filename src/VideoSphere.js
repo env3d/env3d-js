@@ -15,6 +15,7 @@ VideoSphere.prototype.getMesh = function() {
     //video.src = "textures/pano.webm";
     video.src = this.video;
     video.setAttribute( 'webkit-playsinline', 'webkit-playsinline' );
+    video.setAttribute( 'crossorigin', 'anonymous');    
     video.play();
     
     var texture = new THREE.VideoTexture( video );
