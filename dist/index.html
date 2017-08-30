@@ -10,9 +10,15 @@
              this.y = 1;
              this.z = 1;
              this.frame = 0;
+             this.rotateX = -90;
+             this.scale = 0.1;
 
-             this.texture = "models/cube/cube.png";
-             this.model = "models/cube/cube.obj";
+             //this.texture = "models/cube/cube.png";
+             //this.model = "models/cube/cube.obj";
+
+             this.texture = null;
+             this.mtl = "models/poo/obj.mtl";
+             this.model = "models/poo/tinker.obj";
              
              this.move = function() {
                  this.y = Math.abs(Math.sin(this.frame)) + 1;
@@ -24,6 +30,15 @@
          window.addEventListener('load', function() {
 
              var env = new env3d.Env();
+
+             // Lighting is required for mtl files to work
+             var ambient = new THREE.AmbientLight( 0x444444 ); 
+             env.scene.add( ambient );
+             
+             var light = new THREE.DirectionalLight( 0xffeedd);
+             light.position.set( -4, -4, -4 ).normalize();
+             env.scene.add( light );
+             
              
              window['env'] = env;
              console.log(env);

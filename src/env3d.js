@@ -45,6 +45,8 @@ var Env = function(defaultRoom) {
     this.setDefaultControl(this.defaultControl);
     
     this.scene = new THREE.Scene();
+        
+    // Camera    
     this.scene.add(this.camera);    
     
     this.room = new THREE.Group();
@@ -83,11 +85,6 @@ var Env = function(defaultRoom) {
     this.mouseY = 0;
     this.mouseDX = 0;
     this.mouseDY = 0;
-    
-    
-    var light = new THREE.DirectionalLight( 0xffffff, 1.5 );
-    light.position.set( 0, -4, -4 ).normalize();
-    //this.scene.add( light );
     
     if (defaultRoom) {
         this.setRoom(new DefaultRoom());
