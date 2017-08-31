@@ -37,18 +37,19 @@ GameObject.loadObj = function (model, mtl, callback) {
         callback.call(null,GameObject.modelsCache[model]);
     } else {
         // load mtl if it is specified
-        if (mtl) {            
-            GameObject.mtlLoader.load(mtl, function(materials) {
+        if (mtl) {
+            var mtlLoader = new THREE.MTLLoader();
+            mtlLoader.load(mtl, function(materials) {
                 materials.preload();            
                 console.log('loading mtl', materials);
-                GameObject.objLoader.setMaterials(materials);
-                GameObject.objLoader.load(model, function(m) {
+                var objLoader = new THREE.OBJLoader();
+                objLoader.setMaterials(materials);
+                objLoader.load(model, function(m) {
                     GameObject.modelsCache[model] = m;            
                     callback.call(null, m);
                 });            
             });
         } else {
-            // @todo: duplicate code used -- refactor to remove
             GameObject.objLoader.load(model, function(m) {
                 GameObject.modelsCache[model] = m;            
                 callback.call(null, m);
