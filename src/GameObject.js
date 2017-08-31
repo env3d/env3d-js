@@ -83,8 +83,13 @@ GameObject.patchGameObject = function patchFun(gameobj) {
     if (!gameobj.rotateY) gameobj.rotateY = 0;
     if (!gameobj.rotateZ) gameobj.rotateZ = 0;
     if (!gameobj.scale) gameobj.scale = 1;
-    if (typeof gameobj.texture === 'undefined') gameobj.texture = "textures/earth.png";
-    if (typeof gameobj.model === 'undefined') gameobj.model = "sphere"
+    if (typeof gameobj.texture === 'undefined') {
+        gameobj.texture = "textures/earth.png";
+    }
+    if (typeof gameobj.model === 'undefined') {
+        gameobj.model = "sphere";
+    }
+    
     if (!gameobj.move) gameobj.move = function() {};
     
     gameobj._texture = gameobj.texture;
@@ -93,18 +98,18 @@ GameObject.patchGameObject = function patchFun(gameobj) {
         gameobj._model = gameobj.model;
     }
 
-    gameobj.geometry = new THREE.SphereGeometry( 1, 16, 16, -Math.PI/2, Math.PI*2, 0, Math.PI );
-
     var self = gameobj;
     
+    gameobj.geometry = new THREE.SphereGeometry( 1, 16, 16, -Math.PI/2, Math.PI*2, 0, Math.PI );    
     gameobj.mesh = new THREE.Group();
     gameobj.mesh.rotation.order = "YXZ";
+    gameobj.mesh.add(new THREE.Mesh( gameobj.geometry, gameobj.material ));
+    
     gameobj.mesh.name = gameobj.model;
     gameobj.mesh.envGameObject = gameobj;
 
     GameObject.loadTexture(gameobj.texture, function(texture) {
         self.material = new THREE.MeshBasicMaterial({map:texture, side:THREE.DoubleSide});
-        gameobj.mesh.add(new THREE.Mesh( gameobj.geometry, gameobj.material ));
         
         gameobj.mesh.children.forEach(function(c) {
             c.material = gameobj.material;

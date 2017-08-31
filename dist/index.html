@@ -15,10 +15,11 @@
 
              //this.texture = "models/cube/cube.png";
              //this.model = "models/cube/cube.obj";
+             //this.model = "models/tux/tux.obj";
 
              this.texture = null;
-             this.mtl = "models/poo/obj.mtl";
-             this.model = "models/poo/tinker.obj";
+             this.mtl = "models/testobj/obj.mtl";
+             this.model = "models/testobj/tinker.obj";
              
              this.move = function() {
                  this.y = Math.abs(Math.sin(this.frame)) + 1;
@@ -60,7 +61,7 @@
                  rotateY: 0
              });
              env.start();
-             env.setCameraXYZ(0,0,0);
+             env.setCameraXYZ(5,5,25);
              env.setSky('textures/skybox/default');
              //env.setBackgroundVideo('https://env3d.github.io/env3d-js/dist/textures/pano.webm');
              //env.setBackgroundVideo('https://yanwsh.github.io/videojs-panorama/assets/shark.mp4');
@@ -76,6 +77,7 @@
                      object.rotateY += 1;
                  }
              };
+
 
          });
 
