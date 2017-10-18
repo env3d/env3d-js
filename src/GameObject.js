@@ -159,7 +159,13 @@ GameObject.patchGameObject = function patchFun(gameobj) {
                     
                     o.children.forEach(function(c) {
                         if (gameobj.material) c.material = gameobj.material.clone();
-                        gameobj.mesh.add(c.clone());
+                        var clone = c.clone();
+                        console.log(clone);
+                        clone.scale.x = 0.1;
+                        clone.scale.y = 0.1;
+                        clone.scale.z = 0.1;
+                        clone.rotation.x = -(Math.PI/2);
+                        gameobj.mesh.add(clone);
                     });                        
                 });
             }
