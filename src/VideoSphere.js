@@ -30,12 +30,12 @@ VideoSphere.prototype.getMesh = function() {
         var material   = new THREE.MeshBasicMaterial( { map : texture } );
         mesh.material = material;
     } else if (this.image) {
-        let loader = new THREE.TextureLoader();
+        var loader = new THREE.TextureLoader();
         loader.crossOrigin = 'Anonymous';
         loader.load(this.image, function(texture) {
             texture.minFilter = THREE.LinearFilter;
             texture.format = THREE.RGBFormat;
-            let mat = new THREE.MeshBasicMaterial( { map:texture } );
+            var mat = new THREE.MeshBasicMaterial( { map:texture } );
             mesh.material = mat;
         });
     }    
