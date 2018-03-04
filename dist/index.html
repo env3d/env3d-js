@@ -2,7 +2,7 @@
     <head>
 
         <script src="js/env3d.js"></script>
-         
+        
         <script type="text/javascript">
 
          function Cube() {
@@ -74,7 +74,10 @@
 
              env.start();
              env.setCameraXYZ(5,5,25);
+             
+             //env.setBackgroundVideo('http://api.operatoroverload.com/test_vr.jpg');
              env.setSky('textures/skybox/default');
+             
              //env.setBackgroundVideo('https://env3d.github.io/env3d-js/dist/textures/pano.webm');
              //env.setBackgroundVideo('https://yanwsh.github.io/videojs-panorama/assets/shark.mp4');
              //env.setBackgroundVideo('http://media.agency.discovery.com/encoded/discovery-vr/hearing-colors_HD.mp4');
@@ -89,11 +92,7 @@
                      object.rotateY += 1;
                  }
              };
-
-
          });
-
-         
         </script>
         <style>
          body {
