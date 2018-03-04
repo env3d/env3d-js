@@ -9,11 +9,13 @@ var VideoSphere = function(file) {
 }
 
 VideoSphere.prototype.getMesh = function() {
-    var geometry = new THREE.SphereBufferGeometry( 500, 60, 40, Math.PI/2 );
-    geometry.scale( - 1, 1, 1 );
+    var mesh;
     
-    mesh = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial());
     if (this.video) {    
+        var geometry = new THREE.SphereBufferGeometry( 500, 60, 40, Math.PI/2 );
+        geometry.scale( - 1, 1, 1 );
+        
+        mesh = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial());
         var video = document.createElement( 'video' );
         video.width = 640;
         video.height = 360;
@@ -28,8 +30,14 @@ VideoSphere.prototype.getMesh = function() {
         texture.minFilter = THREE.LinearFilter;
         texture.format = THREE.RGBFormat;
         var material   = new THREE.MeshBasicMaterial( { map : texture } );
-        mesh.material = material;
+        mesh.material = material;        
+
     } else if (this.image) {
+        var geometry = new THREE.SphereBufferGeometry( 500, 60, 40, Math.PI/2, Math.PI * 2, Math.PI/3, Math.PI/3 );
+        geometry.scale( - 1, 1, 1 );
+        
+        mesh = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial());
+        
         var loader = new THREE.TextureLoader();
         loader.crossOrigin = 'Anonymous';
         loader.load(this.image, function(texture) {
