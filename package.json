@@ -5,7 +5,7 @@
   "main": "build/env3d.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "babili dist/js/env3d.js dist/js/j4ts-0.2.0-SNAPSHOT/bundle.js -o dist/js/env3d.min.js -c -m",
+    "build": "cat dist/js/env3d.js dist/js/j4ts-0.2.0-SNAPSHOT/bundle.js | minify -o dist/js/env3d.min.js",
     "browsify": "browsify src/env3d.js -o dist/js/env3d.js -d",
     "watch": "watchify src/env3d.js -o dist/js/env3d.js -d",
     "lite": "cd dist; lite-server",
@@ -26,7 +26,7 @@
     "three": "^0.84.0"
   },
   "devDependencies": {
-    "babili": "^0.1.4",
+    "babel-minify": "^0.3.0",
     "watchify": "^3.9.0"
   }
 }
