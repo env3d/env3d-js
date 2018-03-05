@@ -1,8 +1,8 @@
-THREE = require('three');
+var THREE = require('three');
 
 // The name is VideoSphere but it also handles 360 images
 
-var vertShader = `
+let vertShader = `
 varying vec3 vColor;
 varying vec2 vUv;
 
@@ -13,8 +13,8 @@ void main() {
 }
 `;
 
-var fragShader = `
-uniform sampler2D texture; 
+let fragShader = `
+uniform sampler2D texture;
 varying vec3 vColor; 
 varying vec2 vUv; 
 
@@ -30,7 +30,7 @@ void main() {
     } else {
         y = 1.0;
     }
-    gl_FragColor = 1.3 * vec4(y,y,y,1.0) * texture2D(texture, vec2(vUv.x, vUv.y));    
+    gl_FragColor = 1.3 * vec4(y,y,y,1.0) * texture2D(texture, vec2(vUv.x, vUv.y));
 }
 `;
 

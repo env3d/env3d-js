@@ -5,11 +5,13 @@
   "main": "build/env3d.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "cat dist/js/env3d.js dist/js/j4ts-0.2.0-SNAPSHOT/bundle.js | minify -o dist/js/env3d.min.js",
-    "browsify": "browsify src/env3d.js -o dist/js/env3d.js -d",
+    "uglify": "uglifyjs dist/js/env3d.js dist/js/j4ts-0.2.0-SNAPSHOT/bundle.js -o dist/js/env3d.min.js -c -m",
+    "babel": "babel dist/js/env3d.js -o dist/js/env3d.js --presets=es2015 --compact=false",
+    "build": "run-s babel uglify",
+    "browserify": "browserify src/env3d.js -o dist/js/env3d.js -d",
     "watch": "watchify src/env3d.js -o dist/js/env3d.js -d",
     "lite": "cd dist; lite-server",
-    "start": "npm run watch & npm run lite"
+    "start": "run-p watch lite"
   },
   "repository": {
     "type": "git",
@@ -26,7 +28,10 @@
     "three": "^0.84.0"
   },
   "devDependencies": {
-    "babel-minify": "^0.3.0",
+    "babel-cli": "^6.26.0",
+    "babel-preset-es2015": "^6.24.1",
+    "npm-run-all": "^4.1.2",
+    "uglify-js": "^3.3.13",
     "watchify": "^3.9.0"
   }
 }

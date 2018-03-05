@@ -1,4 +1,4 @@
-THREE = require('three');
+window['THREE'] = require('three');
 
 require('../node_modules/three/examples/js/renderers/SoftwareRenderer.js');
 require('../node_modules/three/examples/js/renderers/Projector.js');
@@ -40,7 +40,7 @@ var Env = function(defaultRoom) {
     this.camera.rotation.y = this.cameraYaw = 0;
     this.camera.rotation.z = this.cameraRoll = 0;    
 
-    defaultControlHandlers = new DefaultControlHandlers(this);
+    let defaultControlHandlers = new DefaultControlHandlers(this);
     this.defaultControl = true;
     this.setDefaultControl(this.defaultControl);
     
