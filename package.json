@@ -27,7 +27,6 @@
   },
   "devDependencies": {
     "babili": "^0.1.4",
-    "uglify-js": "^2.8.7",
     "watchify": "^3.9.0"
   }
 }
