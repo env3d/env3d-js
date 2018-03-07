@@ -40,7 +40,7 @@ var Env = function(defaultRoom) {
     this.camera.rotation.y = this.cameraYaw = 0;
     this.camera.rotation.z = this.cameraRoll = 0;    
 
-    let defaultControlHandlers = new DefaultControlHandlers(this);
+    var defaultControlHandlers = new DefaultControlHandlers(this);
     this.defaultControl = true;
     this.setDefaultControl(this.defaultControl);
     
