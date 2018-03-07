@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "uglify": "uglifyjs dist/js/env3d.js dist/js/j4ts-0.2.0-SNAPSHOT/bundle.js -o dist/js/env3d.min.js -c -m",
     "babel": "babel dist/js/env3d.js -o dist/js/env3d.js --presets=es2015 --compact=false",
-    "build": "run-s uglify",
+    "build": "run-s babel uglify",
     "browserify": "browserify src/env3d.js -o dist/js/env3d.js -d",
     "watch": "watchify src/env3d.js -o dist/js/env3d.js -d",
     "lite": "cd dist; lite-server",
