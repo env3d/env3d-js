@@ -42450,7 +42450,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 							o.children.forEach(function (c) {
 								if (gameobj.material) c.material = gameobj.material.clone();
 								var clone = c.clone();
-								if (gameobj.mtl) {
+								if (gameobj.mtl && gameobj.model.indexOf('tinker.obj') > -1) {
 									// if the mtl is present, we assume it's from tinkercad and
 									// perform automatic scaling and rotation
 									console.log(clone);
