@@ -42330,6 +42330,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				// load mtl if it is specified
 				if (mtl) {
 					var mtlLoader = new THREE.MTLLoader();
+					mtlLoader.setMaterialOptions({ side: THREE.DoubleSide });
 					mtlLoader.load(mtl, function (materials) {
 						materials.preload();
 						console.log('loading mtl', materials);

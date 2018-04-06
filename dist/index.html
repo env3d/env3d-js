@@ -33,10 +33,10 @@
              var env = new env3d.Env();
 
              // Lighting is required for mtl files to work
-             var ambient = new THREE.AmbientLight( 0x444444 ); 
+             var ambient = new THREE.AmbientLight( 0xfafafa ); 
              env.scene.add( ambient );
              
-             var light = new THREE.DirectionalLight( 0xffeedd);
+             var light = new THREE.DirectionalLight( 0xffffff);
              light.position.set( -4, -4, -4 ).normalize();
              env.scene.add( light );
              

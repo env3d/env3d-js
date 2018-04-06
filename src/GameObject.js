@@ -39,6 +39,7 @@ GameObject.loadObj = function (model, mtl, callback) {
         // load mtl if it is specified
         if (mtl) {
             var mtlLoader = new THREE.MTLLoader();
+            mtlLoader.setMaterialOptions({side: THREE.DoubleSide});
             mtlLoader.load(mtl, function(materials) {
                 materials.preload();            
                 console.log('loading mtl', materials);
