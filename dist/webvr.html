@@ -1,0 +1,93 @@
+<html>
+    <!-- Entry point for scenecreator based applications -->
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"> 
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+        <!-- Origin Trial Token, feature = WebVR (For Chrome M62+), origin = https://c3d.io, expires = 2018-05-18 -->
+        <meta http-equiv="origin-trial" data-feature="WebVR (For Chrome M62+)" data-expires="2018-05-18" content="ApGFuqpgnOMOJqBcSWOOXaIWOPh82H1OmRwiC+VBlH0jUYkfusC3pfLpWD3BdQ5Rf4KfSXhbxxb3eQbEmra/XQgAAABeeyJvcmlnaW4iOiJodHRwczovL2MzZC5pbzo0NDMiLCJmZWF0dXJlIjoiV2ViVlIxLjFNNjIiLCJleHBpcnkiOjE1MjY2NjE4MDEsImlzU3ViZG9tYWluIjp0cnVlfQ=="> 
+
+
+        <!-- <script src="js/j4ts-0.2.0-SNAPSHOT/bundle.js"></script> -->
+        <script src="js/env3d.js"></script>
+        <!-- <script src="js/env3d.min.js"></script> -->
+
+        <script src="http://beta.c3d.io/js/webvr-polyfill.min.js"></script>
+        
+        <script type="text/javascript">
+         var WebVRConfig = {
+             // Prevents the polyfill from initializing automatically.
+             DEFER_INITIALIZATION: false,
+             // Ensures the polyfill is always active when initialized, even if the
+             // native API is available. This is probably NOT what most pages want.
+             ALWAYS_APPEND_POLYFILL_DISPLAY: true,
+             BUFFER_SCALE: 0.5
+         }
+
+         if (!navigator.vrDisplay) {
+             var webvrPolyfill = new WebVRPolyfill(WebVRConfig);
+         }
+         
+         var angle = new THREE.Euler(); 
+         var frameData; 
+         var vrDisplay;
+         var env;
+         var q = new THREE.Quaternion();
+         
+         function onAnimationFrame() {
+             vrDisplay.requestAnimationFrame(onAnimationFrame);
+             vrDisplay.getFrameData(frameData);
+             var pos = frameData.pose.position;
+             var ori = frameData.pose.orientation;
+             output.innerHTML = pos+'\n'+ori+'\n';//+angle.x;
+             //env.setCameraXYZ(pos[0]*500+5, 5, 13);
+             q.fromArray(ori);
+             //q.set(ori[0], ori[1], ori[2], ori[3]);
+
+             angle.setFromQuaternion(q, 'YXZ');
+
+
+             //output.innerHTML += angle.x + ' ' + angle.y + ' '+angle.z;
+
+             
+             env.setCameraPitch(angle.x * 180/Math.PI);
+             env.setCameraYaw(angle.y * 180/Math.PI);
+             env.setCameraRoll(angle.z * 180/Math.PI);
+         }
+
+         window.addEventListener('load', () => {
+             env = new env3d.Env(true);
+             env.initVRController();
+             env.addObject({
+                 x: 5,
+                 y: 3,
+                 z: 1,
+                 rotateY: 0
+             });
+             env.start();
+             window['env'] = env;
+
+
+             if (navigator.getVRDisplays) {
+                 navigator.getVRDisplays().then( displays => {
+                     if (displays.length > 0) {
+                         vrDisplay = displays[0];
+                         frameData = new VRFrameData();
+                         //onAnimationFrame();
+                     } 
+                 });
+             } else {
+                 console.log('no vr');
+             }
+             
+         });
+         
+        </script>
+    </head>
+    <body>
+        <div id="env3d"></div>
+        <button id="vr">VR</button>
+        <pre id='output'></pre>
+    </body>
+</html>

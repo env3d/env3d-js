@@ -2,8 +2,8 @@ window['THREE'] = require('three');
 
 require('../node_modules/three/examples/js/renderers/SoftwareRenderer.js');
 require('../node_modules/three/examples/js/renderers/Projector.js');
-require('../node_modules/three/examples/js/effects/StereoEffect.js');
-//require('../node_modules/three/examples/js/effects/VREffect.js');
+//require('../node_modules/three/examples/js/effects/StereoEffect.js');
+require('../node_modules/three/examples/js/effects/VREffect.js');
 
 var EnvGameObject = require('./GameObject.js');
 var DefaultRoom = require('./DefaultRoom.js');
@@ -69,6 +69,11 @@ var Env = function(defaultRoom) {
         //this.stereoEffect = new THREE.VREffect(this.renderer);
         this.stereoEffect.setSize( window.innerWidth, window.innerHeight );
     }
+    if (THREE.VREffect) {
+        this.stereoEffect = new THREE.VREffect(this.renderer);
+        //this.stereoEffect = new THREE.VREffect(this.renderer);
+        this.stereoEffect.setSize( window.innerWidth, window.innerHeight, false );
+    }    
 
     this.renderer.setSize( window.innerWidth, window.innerHeight );
 
@@ -315,7 +320,7 @@ Env.prototype.start = function() {
     if (ENV.stereo) {
         renderer = this.stereoEffect;
     }
-    
+
     renderer.render(ENV.scene, ENV.camera);
     if (Detector.webgl) {
         renderer.render(this.hud.scene, this.hud.camera);
@@ -338,10 +343,19 @@ Env.prototype.start = function() {
 
     if (this.preload) {
         // in preload mode, update as fast as we can
-        requestAnimationFrame(Env.prototype.start.bind(this));
+        if (this.stereo) {
+            this.vrDisplay.requestAnimationFrame(Env.prototype.start.bind(this));
+        } else {
+            requestAnimationFrame(Env.prototype.start.bind(this));            
+        }
+
     } else {
         setTimeout(function() {
-            requestAnimationFrame(Env.prototype.start.bind(this));
+            if (this.stereo) {
+                this.vrDisplay.requestAnimationFrame(Env.prototype.start.bind(this));
+            } else {
+                requestAnimationFrame(Env.prototype.start.bind(this));            
+            }
         }.bind(this), 1000 / 30);
     }
     //THREE.AnimationHandler.update( clock.getDelta() );
@@ -593,15 +607,18 @@ Env.prototype.initVRController = function() {
     var angle = new THREE.Euler();
     var q = new THREE.Quaternion();
     var data = new VRFrameData();
-    var vrDisplay = null;
+    this.vrDisplay = null;
     var env = this;
 
     navigator.getVRDisplays().then(function(displays) {
         console.log("Setting vrDisplay");
-        vrDisplay = displays[0];
-        vrDisplay.resetPose();
-
-        this.vrAnimationFrame();
+        if (displays.length > 0) {
+            this.vrDisplay = displays[0];
+            //vrDisplay.resetPose();
+            this.vrDisplay.requestAnimationFrame(this.vrAnimationFrame.bind(this));
+        } else {
+            console.warn('no vr displays found');
+        }
     }.bind(this)).catch(function(err) {
         console.log("Error with VR displays",err);
     });
@@ -613,6 +630,9 @@ Env.prototype.initVRController = function() {
         if (fselem) {
             document.getElementById("vr").setAttribute("fullscreen", true);
             env.stereo = true;
+            env.stereoEffect.setSize(window.clientWidth, window.clientHeight, false);
+            env.camera.aspect = window.clientWidth / window.clientHeight;
+            camera.updateProjectionMatrix();
         } else {
             document.getElementById("vr").removeAttribute("fullscreen");
             env.stereo = false;
@@ -623,6 +643,14 @@ Env.prototype.initVRController = function() {
     document.addEventListener("mozfullscreenchange", fsEvent);
     document.addEventListener("fullscreenchange", fsEvent);
     document.getElementById("vr").addEventListener('click', function(e) {
+        env.stereo = !env.stereo;
+        this.vrDisplay.requestPresent([{source: document.querySelector('#env3d canvas')}]);
+        if (env.stereo) {
+            document.getElementById("vr").setAttribute("fullscreen", true);            
+        } else {
+            env.stereoEffect.setSize(window.clientWidth, window.clientHeight, false);            
+        }
+        /*
         var elem = document.body;
         var fs = elem.requestFullScreen || elem.webkitRequestFullScreen || elem.mozRequestFullScreen;
         if (fs) {
@@ -632,11 +660,12 @@ Env.prototype.initVRController = function() {
             env.stereo = !env.stereo;
             window.dispatchEvent(new Event('resize'));
         }
-    });
+        */
+    }.bind(this));
 
     // Attach vrAnimationFrame to the env object so it can be called later
-    this.vrAnimationFrame = function() {                 
-        vrDisplay.getFrameData(data);                 
+    this.vrAnimationFrame = function() {
+        this.vrDisplay.getFrameData(data);
         q.set(data.pose.orientation[0],
               data.pose.orientation[1],
               data.pose.orientation[2],
@@ -650,7 +679,7 @@ Env.prototype.initVRController = function() {
         env.setCameraYaw(yaw);
         env.setCameraPitch(pitch);
         env.setCameraRoll(roll);
-        vrDisplay.requestAnimationFrame(this.vrAnimationFrame);
+        this.vrDisplay.requestAnimationFrame(this.vrAnimationFrame);
     }.bind(this);        
 }
 
