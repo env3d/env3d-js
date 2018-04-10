@@ -2,7 +2,6 @@ window['THREE'] = require('three');
 
 require('../node_modules/three/examples/js/renderers/SoftwareRenderer.js');
 require('../node_modules/three/examples/js/renderers/Projector.js');
-//require('../node_modules/three/examples/js/effects/StereoEffect.js');
 require('../node_modules/three/examples/js/effects/VREffect.js');
 
 var EnvGameObject = require('./GameObject.js');
@@ -23,7 +22,6 @@ var Env = function(defaultRoom) {
     var ENV = this;
 
     // First create the HUD scene and camera
-
     this.hud = new Hud(this, 512, 512);
     this.setupWorld = LoadWorld;
 
@@ -45,40 +43,36 @@ var Env = function(defaultRoom) {
     this.setDefaultControl(this.defaultControl);
     
     this.scene = new THREE.Scene();
-        
-    // Camera    
+    
     this.scene.add(this.camera);    
     
     this.room = new THREE.Group();
     this.scene.add(this.room);
-    
+
     this.gameObjects = [];
 
     //Detector.webgl = false;
     if (Detector.webgl) {
-        this.renderer = new THREE.WebGLRenderer();
-        this.renderer.autoClear = false;
+        this.renderer = new THREE.WebGLRenderer({ antialias: true });
     } else {
         this.renderer = new THREE.SoftwareRenderer();
     }
 
+    // Attach to the body, taking over the entire window
+    // @todo: want to attach to an element, maybe create custom element
+    this.canvas = this.renderer.domElement;
+    document.querySelector('#env3d').appendChild(this.canvas);
+
     // Turn this on for stereo rendering
-    this.stereo = false;
-    if (THREE.StereoEffect) {
-        this.stereoEffect = new THREE.StereoEffect(this.renderer);
-        //this.stereoEffect = new THREE.VREffect(this.renderer);
-        this.stereoEffect.setSize( window.innerWidth, window.innerHeight );
-    }
     if (THREE.VREffect) {
-        this.stereoEffect = new THREE.VREffect(this.renderer);
-        //this.stereoEffect = new THREE.VREffect(this.renderer);
-        this.stereoEffect.setSize( window.innerWidth, window.innerHeight, false );
-    }    
-
-    this.renderer.setSize( window.innerWidth, window.innerHeight );
-
-    //this.renderer.setClearColor(0x00008f);
-
+        this.vrEffect = new THREE.VREffect(this.renderer);
+        this.renderer.setPixelRatio(Math.floor(window.devicePixelRatio));
+        this.vrEffect.setSize( window.innerWidth, window.innerHeight, false );        
+        //this.vrEffect.setSize( this.canvas.clientWidth, this.canvas.clientHeight, false );
+    }  else {
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    
     this.lastKey = 0;
     this.lastKeyDown = 0;
 
@@ -93,11 +87,7 @@ var Env = function(defaultRoom) {
     
     if (defaultRoom) {
         this.setRoom(new DefaultRoom());
-    }
-    // Attach to the body, taking over the entire window
-    // @todo: want to attach to an element, maybe create custom element
-
-    document.querySelector('#env3d').appendChild(ENV.renderer.domElement);
+    }    
 
     this.keys = {};    
     document.addEventListener('keyup', (function(e) {
@@ -107,18 +97,132 @@ var Env = function(defaultRoom) {
     }).bind(this));
 
     document.addEventListener('keydown', (function(e) {
-        //this.setDisplayStr(e.charCode+" "+e.which+" "+e.keyCode);
         this.lastKeyDown = e.keyCode;
         this.keys[e.keyCode] = true;
     }).bind(this));
 
-    window.addEventListener('resize', function() {
-	this.camera.aspect = window.innerWidth / window.innerHeight;
-	this.camera.updateProjectionMatrix();
-	this.renderer.setSize( window.innerWidth, window.innerHeight );
-        this.stereoEffect.setSize( window.innerWidth, window.innerHeight );
-    }.bind(this), false);
 }
+
+Env.prototype.setCrosshair = require('./crosshair.js');
+
+
+// When we call start, determine if running in vr mode or not
+Env.prototype.start = function() {
+        
+    window.addEventListener('resize', onResize.bind(this));
+    
+    if (navigator.getVRDisplays) {
+        window.addEventListener('vrdisplaypresentchange', () => {
+            console.log('vrDisplayChange');
+            onResize.apply(this)
+        });
+        
+        navigator.getVRDisplays().then(function(displays) {
+            if (displays.length > 0) {
+                console.log('VR Detected');
+                // vrDisplay will be present
+                this.vrDisplay = displays[0];            
+
+                this.vrDisplay.requestAnimationFrame(this.animate.bind(this));
+                document.querySelector('#vr').addEventListener('click', () => {
+                    this.vrDisplay.requestPresent([{source: document.querySelector('#env3d canvas')}]);
+                });
+            } else {
+                console.log('VR browser but no display, regular rendering');
+                requestAnimationFrame(this.animate.bind(this));
+            }
+        }.bind(this)).catch(function(err) {
+            console.log("Error with VR displays, revert to regular rendering",err);
+            requestAnimationFrame(this.animate.bind(this));
+        });        
+    } else {
+        console.log('non VR browser, normal rendering')
+        requestAnimationFrame(this.animate.bind(this));        
+    }
+}
+
+function onResize() {
+    if (!onResize.resizeDelay) {
+        onResize.resizeDelay = setTimeout(() => {
+            onResize.resizeDelay = null;
+            let w = window.innerWidth, h = window.innerHeight;
+            console.log('resize to ', w, h);
+            if (this.vrEffect) {
+                this.vrEffect.setSize( w, h, false );
+            } else {
+                this.renderer.setSize(w, h);
+            }
+            this.camera.aspect = w / h;
+            this.camera.updateProjectionMatrix();
+        }, 250);
+    }        
+}
+
+var clock = new THREE.Clock();
+Env.prototype.animate = function() {
+    
+    var ENV = this;
+    
+    ENV.camera.rotation.order = "YXZ";
+    ENV.camera.position.x = ENV.cameraX;
+    ENV.camera.position.y = ENV.cameraY;
+    ENV.camera.position.z = ENV.cameraZ;
+    ENV.camera.rotation.x = ENV.cameraPitch * (Math.PI / 180);
+    ENV.camera.rotation.y = ENV.cameraYaw * (Math.PI / 180);
+    ENV.camera.rotation.z = ENV.cameraRoll * (Math.PI / 180);    
+
+    if (this.vrEffect) {
+        this.vrEffect.render(ENV.scene, ENV.camera);
+    } else {
+        this.renderer.render(ENV.scene, ENV.camera);
+    }
+    
+    ENV.loop();
+    for (var i = 0; i < ENV.gameObjects.length; i++) {	    
+	ENV.gameObjects[i].update();
+    }
+
+    this.vrDisplay && this.vrController();
+    
+    if (this.preload) {
+        // in preload mode, update as fast as we can
+        if (this.vrDisplay) {
+            this.vrDisplay.requestAnimationFrame(Env.prototype.animate.bind(this));
+        } else {
+            requestAnimationFrame(Env.prototype.animate.bind(this));            
+        }
+    } else {
+        setTimeout(function() {
+            if (this.vrDisplay) {
+                this.vrDisplay.requestAnimationFrame(Env.prototype.animate.bind(this));
+            } else {
+                requestAnimationFrame(Env.prototype.animate.bind(this));            
+            }
+        }.bind(this), 1000 / 30);
+    }
+    //THREE.AnimationHandler.update( clock.getDelta() );        
+}
+
+var vec = new THREE.Vector3();
+Env.prototype.vrController = function() {
+    if (!this.data) this.data = new VRFrameData();
+    
+    this.vrDisplay.getFrameData(this.data);
+    q.set(this.data.pose.orientation[0],
+          this.data.pose.orientation[1],
+          this.data.pose.orientation[2],
+          this.data.pose.orientation[3]);
+    
+    angle.setFromQuaternion(q, 'YXZ');            
+    
+    var yaw = angle.y * 180/Math.PI;
+    var pitch = angle.x * 180/Math.PI;
+    var roll = angle.z * 180/Math.PI;                 
+    this.setCameraYaw(yaw);
+    this.setCameraPitch(pitch);
+    this.setCameraRoll(roll);
+}
+
 
 // A debug print of the current camera position and rotation
 Env.prototype.debugCameraPosition = function() {
@@ -172,8 +276,32 @@ Env.prototype.setSky = function(path) {
 	'top.png', 'bottom.png',
 	'north.png', 'south.png'
     ] );
+
+    if ( !this.boxMesh) { 
+
+        this.boxMesh = new THREE.Mesh(
+            new THREE.BoxBufferGeometry( 1, 1, 1 ),
+            new THREE.ShaderMaterial( { 
+                uniforms: THREE.ShaderLib.cube.uniforms,
+                vertexShader: THREE.ShaderLib.cube.vertexShader,
+                fragmentShader: THREE.ShaderLib.cube.fragmentShader,
+                side: THREE.BackSide,
+                depthTest: true,
+                depthWrite: false,
+                fog: false
+            } )
+        );
+        
+        this.boxMesh.geometry.removeAttribute( 'normal' );
+        this.boxMesh.geometry.removeAttribute( 'uv' );
+        this.boxMesh.material.uniforms.tCube.value = textureCube;
+        this.camera.add(this.boxMesh);
+        //this.boxMesh.scale.set(100,100,100);
+        //this.scene.add(this.boxMesh);
+    }
+    
     console.log(textureCube);
-    this.scene.background = textureCube;
+    //this.scene.background = textureCube;
 }
 
 Env.prototype.setTerrain = function(textureFile) {
@@ -239,11 +367,6 @@ Env.prototype.setRoom = function(room) {
     this.clearScene();
     
     this.scene.remove(this.room);
-    /*
-    this.room.children.forEach(function (wall) {
-        this.room.remove(wall);
-    }.bind(this));
-    */
 
     var defaultRoom = new DefaultRoom();
     this.room = new THREE.Object3D();
@@ -282,8 +405,7 @@ Env.prototype.addObject = function(obj) {
 	this.scene.add(obj.mesh);            
     }
     
-    this.gameObjects.push(obj);
-    
+    this.gameObjects.push(obj);    
 }
 
 Env.prototype.removeObject = function(obj) {
@@ -301,65 +423,6 @@ Env.prototype.clearScene = function() {
     }.bind(this));
     this.gameObjects = [];
     this.vertices = [];
-}
-
-var clock = new THREE.Clock();
-
-Env.prototype.start = function() {
-    var ENV = this;
-    
-    ENV.camera.rotation.order = "YXZ";
-    ENV.camera.position.x = ENV.cameraX;
-    ENV.camera.position.y = ENV.cameraY;
-    ENV.camera.position.z = ENV.cameraZ;
-    ENV.camera.rotation.x = ENV.cameraPitch * (Math.PI / 180);
-    ENV.camera.rotation.y = ENV.cameraYaw * (Math.PI / 180);
-    ENV.camera.rotation.z = ENV.cameraRoll * (Math.PI / 180);    
-
-    var renderer = ENV.renderer;
-    if (ENV.stereo) {
-        renderer = this.stereoEffect;
-    }
-
-    renderer.render(ENV.scene, ENV.camera);
-    if (Detector.webgl) {
-        renderer.render(this.hud.scene, this.hud.camera);
-    }
-    
-    ENV.loop();
-    for (var i = 0; i < ENV.gameObjects.length; i++) {	    
-	ENV.gameObjects[i].update();
-	//ENV.gameObjects[i].move();
-    }
-    // render the crosshair if available
-    /*
-    if (this.crosshair) {
-        var zCamVec = new THREE.Vector3(0,0,-0.3); 
-        var position = this.camera.localToWorld(zCamVec);
-        this.crosshair.position.set(position.x, position.y, position.z); 
-        this.crosshair.lookAt(this.camera.position);
-    }
-    */
-
-    if (this.preload) {
-        // in preload mode, update as fast as we can
-        if (this.stereo) {
-            this.vrDisplay.requestAnimationFrame(Env.prototype.start.bind(this));
-        } else {
-            requestAnimationFrame(Env.prototype.start.bind(this));            
-        }
-
-    } else {
-        setTimeout(function() {
-            if (this.stereo) {
-                this.vrDisplay.requestAnimationFrame(Env.prototype.start.bind(this));
-            } else {
-                requestAnimationFrame(Env.prototype.start.bind(this));            
-            }
-        }.bind(this), 1000 / 30);
-    }
-    //THREE.AnimationHandler.update( clock.getDelta() );
-    
 }
 
 // Moves the camera along the path specified by pointsArray,
@@ -531,7 +594,7 @@ Env.prototype.getMouseY = function() {
 
 Env.prototype.setDisplayStr = function(str) {
     //console.log("displaying "+str);
-    this.hud.write(str);
+    //this.hud.write(str);
 }
 
 Env.prototype.getObject = function(objClass) {
@@ -598,137 +661,69 @@ Env.prototype.getPick = function(x, y) {
     return null;
 }
 
-// Allow accelerometer to control camera's pitch, yaw, and roll
-// and render using stereo effect
-Env.prototype.initVRController = function() {
-
-    this.setCrosshair(true);
-    
-    var angle = new THREE.Euler();
-    var q = new THREE.Quaternion();
-    var data = new VRFrameData();
-    this.vrDisplay = null;
-    var env = this;
-
-    navigator.getVRDisplays().then(function(displays) {
-        console.log("Setting vrDisplay");
-        if (displays.length > 0) {
-            this.vrDisplay = displays[0];
-            //vrDisplay.resetPose();
-            this.vrDisplay.requestAnimationFrame(this.vrAnimationFrame.bind(this));
-        } else {
-            console.warn('no vr displays found');
-        }
-    }.bind(this)).catch(function(err) {
-        console.log("Error with VR displays",err);
-    });
-
-    function fsEvent(e) {
-        var fselem = document.fullscreenElement ||
-                     document.webkitFullscreenElement ||
-                     document.mozFullscreenElement;
-        if (fselem) {
-            document.getElementById("vr").setAttribute("fullscreen", true);
-            env.stereo = true;
-            env.stereoEffect.setSize(window.clientWidth, window.clientHeight, false);
-            env.camera.aspect = window.clientWidth / window.clientHeight;
-            camera.updateProjectionMatrix();
-        } else {
-            document.getElementById("vr").removeAttribute("fullscreen");
-            env.stereo = false;
-        }
-    }
-    
-    document.addEventListener("webkitfullscreenchange", fsEvent);
-    document.addEventListener("mozfullscreenchange", fsEvent);
-    document.addEventListener("fullscreenchange", fsEvent);
-    document.getElementById("vr").addEventListener('click', function(e) {
-        env.stereo = !env.stereo;
-        this.vrDisplay.requestPresent([{source: document.querySelector('#env3d canvas')}]);
-        if (env.stereo) {
-            document.getElementById("vr").setAttribute("fullscreen", true);            
-        } else {
-            env.stereoEffect.setSize(window.clientWidth, window.clientHeight, false);            
-        }
-        /*
-        var elem = document.body;
-        var fs = elem.requestFullScreen || elem.webkitRequestFullScreen || elem.mozRequestFullScreen;
-        if (fs) {
-            fs.bind(elem).call();
-        } else {
-            // safari mobile doesn't have fullscreen api
-            env.stereo = !env.stereo;
-            window.dispatchEvent(new Event('resize'));
-        }
-        */
-    }.bind(this));
-
-    // Attach vrAnimationFrame to the env object so it can be called later
-    this.vrAnimationFrame = function() {
-        this.vrDisplay.getFrameData(data);
-        q.set(data.pose.orientation[0],
-              data.pose.orientation[1],
-              data.pose.orientation[2],
-              data.pose.orientation[3]);
-        
-        angle.setFromQuaternion(q, 'YXZ');            
-        
-        var yaw = angle.y * 180/Math.PI;
-        var pitch = angle.x * 180/Math.PI;
-        var roll = angle.z * 180/Math.PI;                 
-        env.setCameraYaw(yaw);
-        env.setCameraPitch(pitch);
-        env.setCameraRoll(roll);
-        this.vrDisplay.requestAnimationFrame(this.vrAnimationFrame);
-    }.bind(this);        
-}
-
 var crosshair;
 Env.prototype.setCrosshair = function(enabled) {
-    if (!crosshair) {
-        var material = new THREE.LineBasicMaterial({
-            linewidth: 2,
-            color: 0xFFFFFF,
-            depthTest: false
-        }); 
-        
-        // crosshair size
-        var x = 1, y = 1;
-        
-        var geometry = new THREE.Geometry(); 
 
-        // crosshair
-        geometry.vertices.push(new THREE.Vector3(0, y, 0)); 
-        geometry.vertices.push(new THREE.Vector3(0, -y, 0));
-        geometry.vertices.push(new THREE.Vector3(0, 0, 0)); 
-        geometry.vertices.push(new THREE.Vector3(x, 0, 0));     
-        geometry.vertices.push(new THREE.Vector3(-x, 0, 0)); 
-
-        crosshair = new THREE.Line( geometry, material );
-
-        // place it in the center 
-        var crosshairPercentX = 50; 
-        var crosshairPercentY = 50; 
-        var crosshairPositionX = (crosshairPercentX / 100) * 2 - 1; 
-        var crosshairPositionY = (crosshairPercentY / 100) * 2 - 1; 
-
-        crosshair.renderOrder = Number.MAX_SAFE_INTEGER;
-        crosshair.position.x = crosshairPositionX * this.camera.aspect; 
-        crosshair.position.y = crosshairPositionY; 
-
-        crosshair.position.z = -100;
-    }
-    
+    if (!crosshair) crosshair = createReticle(); //createCrosshair.apply(this);
     if (enabled) {
         this.crosshair = crosshair;
         this.camera.add(this.crosshair);
-        //this.scene.add(this.crosshair);
     } else {
         this.camera.remove(this.crosshair);
         //if (this.crosshair) this.scene.remove(this.crosshair);        
         this.crosshair = null;        
     }
 }
+
+function createReticle() {
+    this.reticle = new THREE.Mesh(
+        new THREE.RingBufferGeometry(0.03, 0.05, 15),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, depthTest: false, depthWrite: false})
+    );
+    this.reticle.renderOrder = Number.MAX_SAFE_INTEGER;
+    this.reticle.position.set(0,0,-10);
+
+    return reticle;
+}
+
+function createCrosshair() {
+    var material = new THREE.LineBasicMaterial({
+        linewidth: 2,
+        color: 0xFFFFFF,
+        depthTest: false,
+        depthWrite: false
+    }); 
+    
+    // crosshair size
+    var x = 1, y = 1;
+    
+    var geometry = new THREE.Geometry(); 
+
+    // crosshair
+    geometry.vertices.push(new THREE.Vector3(0, y, 0)); 
+    geometry.vertices.push(new THREE.Vector3(0, -y, 0));
+    geometry.vertices.push(new THREE.Vector3(0, 0, 0)); 
+    geometry.vertices.push(new THREE.Vector3(x, 0, 0));     
+    geometry.vertices.push(new THREE.Vector3(-x, 0, 0)); 
+
+    let crosshair = new THREE.Line( geometry, material );
+
+    // place it in the center 
+    var crosshairPercentX = 50; 
+    var crosshairPercentY = 50; 
+    var crosshairPositionX = (crosshairPercentX / 100) * 2 - 1; 
+    var crosshairPositionY = (crosshairPercentY / 100) * 2 - 1; 
+
+    crosshair.renderOrder = Number.MAX_SAFE_INTEGER;
+    crosshair.position.x = crosshairPositionX * this.camera.aspect; 
+    crosshair.position.y = crosshairPositionY; 
+
+    crosshair.position.z = -100;
+
+    return crosshair;
+}
+
+
 
 // The user will override this method to put in custom code
 Env.prototype.loop = function() {}

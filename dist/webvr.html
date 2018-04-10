@@ -1,8 +1,10 @@
 <html>
     <!-- Entry point for scenecreator based applications -->
     <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"> 
-        <meta name="apple-mobile-web-app-capable" content="yes">
+        
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, shrink-to-fit=no">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes" />        
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
         <!-- Origin Trial Token, feature = WebVR (For Chrome M62+), origin = https://c3d.io, expires = 2018-05-18 -->
@@ -11,6 +13,7 @@
 
         <!-- <script src="js/j4ts-0.2.0-SNAPSHOT/bundle.js"></script> -->
         <script src="js/env3d.js"></script>
+        <!-- <script src="WebVR.js"></script> -->
         <!-- <script src="js/env3d.min.js"></script> -->
 
         <script src="http://beta.c3d.io/js/webvr-polyfill.min.js"></script>
@@ -35,55 +38,89 @@
          var env;
          var q = new THREE.Quaternion();
          
-         function onAnimationFrame() {
-             vrDisplay.requestAnimationFrame(onAnimationFrame);
-             vrDisplay.getFrameData(frameData);
-             var pos = frameData.pose.position;
-             var ori = frameData.pose.orientation;
-             output.innerHTML = pos+'\n'+ori+'\n';//+angle.x;
-             //env.setCameraXYZ(pos[0]*500+5, 5, 13);
-             q.fromArray(ori);
-             //q.set(ori[0], ori[1], ori[2], ori[3]);
-
-             angle.setFromQuaternion(q, 'YXZ');
-
-
-             //output.innerHTML += angle.x + ' ' + angle.y + ' '+angle.z;
-
-             
-             env.setCameraPitch(angle.x * 180/Math.PI);
-             env.setCameraYaw(angle.y * 180/Math.PI);
-             env.setCameraRoll(angle.z * 180/Math.PI);
-         }
-
          window.addEventListener('load', () => {
              env = new env3d.Env(true);
-             env.initVRController();
-             env.addObject({
+             //env.renderer.vr.enabled = true;
+
+             //env.initVRController();
+             
+             env.scene.add( new THREE.HemisphereLight( 0xffffff, 0xffffff ) );
+             
+             // Lighting is required for mtl files to work
+             var ambient = new THREE.AmbientLight( 0xfafafa ); 
+             //env.scene.add( ambient );
+             
+             var light = new THREE.DirectionalLight( 0xffffff);
+             light.position.set( -4, -4, -4 ).normalize();
+             env.scene.add( light );
+             
+
+             
+             env.setRoom({textureNorth: null, textureSouth: null,
+                          textureEast: null, textureWest: null,
+                          textureTop: null, textureBottom: null});
+
+             env.setCrosshair(true);
+             //env.setSky('https://env3d.github.io/env3d-js/dist/textures/skybox/default');
+
+             var a = {
                  x: 5,
                  y: 3,
                  z: 1,
-                 rotateY: 0
-             });
-             env.start();
-             window['env'] = env;
-
-
-             if (navigator.getVRDisplays) {
-                 navigator.getVRDisplays().then( displays => {
-                     if (displays.length > 0) {
-                         vrDisplay = displays[0];
-                         frameData = new VRFrameData();
-                         //onAnimationFrame();
-                     } 
-                 });
-             } else {
-                 console.log('no vr');
-             }
+                 rotateY: 0,
+                 texture: null,
+                 mtl: 'http://api.operatoroverload.com/models/Intersection/materials.mtl',           
+                 model: 'http://api.operatoroverload.com/models/Intersection/intersection.obj'
+             };
              
+             env.addObject(a);
+
+             var b = {
+                 x: 5,
+                 y: 5,
+                 z: 0
+             }
+
+             env.addObject(b);
+             
+             env.loop = function() {
+                 a.rotateY++;
+                 env.setDisplayStr('hi');
+             }
+              
+             env.start();
+
          });
          
         </script>
+        <style>
+         * {
+             margin: 0;
+             padding: 0;
+         }
+         
+         #vr {
+             position: fixed;
+             width: 100px;
+             height: 100px;
+             left: 5px;
+             top: 5px;
+         }
+         
+         canvas {
+             display: block;
+             width: 100%;
+             height: 100%;
+         }
+         
+         #output {
+             display: none;
+         }
+         
+         [fullscreen] {
+             display: none;
+         }
+        </style>
     </head>
     <body>
         <div id="env3d"></div>

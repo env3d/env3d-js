@@ -3,7 +3,7 @@ var Keyboard = require('./lwjgl-keyboard.js');
 
 var Hud = function(env, width, height) {
     this.scene = new THREE.Scene();
-
+    this.scene.background = new THREE.Color( 0x500000 );
 
     /*
     this.camera = new THREE.OrthographicCamera(
@@ -37,20 +37,21 @@ var Hud = function(env, width, height) {
     this.material = new THREE.MeshBasicMaterial( {
         map: this.hudTexture,
         transparent: true,
-        opacity: 1
+        opacity: 0.5,
+        wireframe: true
     } );
 
     
-    //this.planeGeometry = new THREE.PlaneGeometry( width, height );
-    //var mesh = new THREE.Mesh( this.planeGeometry, this.material )
-    //mesh.position.set(0,0,-10);
-    //mesh.scale.set(0.01,0.01,0.01);
-    //this.scene.add(mesh);
+    this.planeGeometry = new THREE.PlaneGeometry( width, height );
+    var mesh = new THREE.Mesh( this.planeGeometry, this.material )
+    mesh.position.set(0,0,-10);
+    mesh.scale.set(0.01,0.01,0.01);
+    this.scene.add(mesh);
 
     var touching = false;
     // --- Screen touch  handlers ---
     var screenDown = function(ev) {
-        if (ev) {
+        if (ev && (ev.pageX || ev.touches)) {
             var pageX = ev.pageX || ev.touches.item(0).pageX;
             var pageY = ev.pageY || ev.touches.item(0).pageY;
             env.mouse['0'] = true;
@@ -62,7 +63,7 @@ var Hud = function(env, width, height) {
     }
 
     var screenMove = function(ev) {
-        if (ev) {
+        if (ev && (ev.pageX || ev.touches)) {
             var pageX = ev && (ev.pageX || ev.touches.item(0).pageX);
             var pageY = ev && (ev.pageY || ev.touches.item(0).pageY);
             if (touching) {

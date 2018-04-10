@@ -86,7 +86,8 @@
              //env.initVRController();
              
              console.log(env.gameObjects);
-             env.loop = function() {                
+             env.loop = function() {
+                 
                  var object = env.getPick(env.getMouseX(), env.getMouseY());
                  if (object) {
                      object.rotateY += 1;
@@ -105,3 +106,4 @@
         <div id="env3d"></div>
     </body>
 </html>
+B

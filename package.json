@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/env3d/env3d-js#readme",
   "dependencies": {
-    "three": "^0.84.0"
+    "three": "^0.91.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
