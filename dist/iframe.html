@@ -1,0 +1,22 @@
+<html>
+    <style>
+     div {
+         height: 20%;
+     }
+    </style>
+    <body>
+        <div>TEST</div>
+        <iframe id='env3d' src='webvr.html' width='50%' height='50%'></iframe>
+        <script>
+
+         env3d.addEventListener('focusout', evt => {
+             console.log('focus out');
+         });
+
+         env3d.addEventListener('blur', evt => {
+             console.log('blur');
+         });
+
+        </script>
+    </body>
+</html>

@@ -151,9 +151,7 @@ GameObject.patchGameObject = function patchFun(gameobj) {
 	    gameobj._model = gameobj.model;
 
             if (gameobj.model.search("obj") > -1) {
-                gameobj.mesh.children.forEach(function(c) {
-                    gameobj.mesh.remove(c);
-                });
+                gameobj.mesh.children.length = 0;
                 
                 //objLoader.load(gameobj.model, function(o) {
                 GameObject.loadObj(gameobj.model, gameobj.mtl, function(o) {

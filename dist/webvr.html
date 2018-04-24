@@ -61,7 +61,7 @@
                           textureTop: null, textureBottom: null});
 
              env.setCrosshair(true);
-             //env.setSky('https://env3d.github.io/env3d-js/dist/textures/skybox/default');
+             env.setSky('https://env3d.github.io/env3d-js/dist/textures/skybox/default');
 
              var a = {
                  x: 5,
@@ -84,11 +84,16 @@
              env.addObject(b);
              
              env.loop = function() {
-                 a.rotateY++;
-                 env.setDisplayStr('hi');
+                 a.rotateY += 0.5;
              }
               
-             env.start();
+             let messages = ['hi bye','bye hi'];
+             let i = 0;
+             setInterval(() => {                 
+                 env.setDisplayStr(messages[i++%messages.length]);
+             }, 1000);
+             
+             env.start({vr: true});
 
          });
          

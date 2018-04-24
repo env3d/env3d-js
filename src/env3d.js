@@ -12,6 +12,7 @@ var DefaultControlHandlers = require('./DefaultControlHandlers.js');
 var Detector = require('../node_modules/three/examples/js/Detector.js');
 var LoadWorld = require('./LoadWorld.js');
 var VideoSphere = require('./VideoSphere.js');
+var Stats = require('./Stats.js');
 
 // If defaultRoom is true, create one
 var Env = function(defaultRoom) {
@@ -20,7 +21,7 @@ var Env = function(defaultRoom) {
 
     // Create ENV as this to preserve scope
     var ENV = this;
-
+    
     // First create the HUD scene and camera
     this.hud = new Hud(this, 512, 512);
     this.setupWorld = LoadWorld;
@@ -38,6 +39,9 @@ var Env = function(defaultRoom) {
     this.camera.rotation.y = this.cameraYaw = 0;
     this.camera.rotation.z = this.cameraRoll = 0;    
 
+
+    if (this.hud) this.camera.add(this.hud.mesh);
+    
     let defaultControlHandlers = new DefaultControlHandlers(this);
     this.defaultControl = true;
     this.setDefaultControl(this.defaultControl);
@@ -58,6 +62,9 @@ var Env = function(defaultRoom) {
         this.renderer = new THREE.SoftwareRenderer();
     }
 
+    // an object to store statistics such as framerate and number of triangles
+    this.stats = new Stats(this.renderer);
+    
     // Attach to the body, taking over the entire window
     // @todo: want to attach to an element, maybe create custom element
     this.canvas = this.renderer.domElement;
@@ -103,15 +110,15 @@ var Env = function(defaultRoom) {
 
 }
 
-Env.prototype.setCrosshair = require('./crosshair.js');
-
-
 // When we call start, determine if running in vr mode or not
-Env.prototype.start = function() {
+Env.prototype.start = function(settings) {
         
     window.addEventListener('resize', onResize.bind(this));
-    
-    if (navigator.getVRDisplays) {
+
+    console.log('starting env3d ', settings);
+
+    this.animateObjects();
+    if (settings && settings.vr && navigator.getVRDisplays) {
         window.addEventListener('vrdisplaypresentchange', () => {
             console.log('vrDisplayChange');
             onResize.apply(this)
@@ -123,15 +130,22 @@ Env.prototype.start = function() {
                 // vrDisplay will be present
                 this.vrDisplay = displays[0];            
 
-                this.vrDisplay.requestAnimationFrame(this.animate.bind(this));
+                console.log('scheduling animation frame on display', this.vrDisplay);
+                requestAnimationFrame(this.animate.bind(this));
+                
+                //requestAnimationFrame(this.animate.bind(this));
                 document.querySelector('#vr').addEventListener('click', () => {
                     this.vrDisplay.requestPresent([{source: document.querySelector('#env3d canvas')}]);
                 });
             } else {
                 console.log('VR browser but no display, regular rendering');
                 requestAnimationFrame(this.animate.bind(this));
+                document.querySelector('#vr').addEventListener('click', () => {                    
+                    console.log('fullscreen');
+                    window.dispatchEvent(new Event('env3dRequestPresent'));
+                });
             }
-        }.bind(this)).catch(function(err) {
+        }.bind(this)).catch(err => {
             console.log("Error with VR displays, revert to regular rendering",err);
             requestAnimationFrame(this.animate.bind(this));
         });        
@@ -158,9 +172,8 @@ function onResize() {
     }        
 }
 
-var clock = new THREE.Clock();
 Env.prototype.animate = function() {
-    
+
     var ENV = this;
     
     ENV.camera.rotation.order = "YXZ";
@@ -177,37 +190,39 @@ Env.prototype.animate = function() {
         this.renderer.render(ENV.scene, ENV.camera);
     }
     
-    ENV.loop();
-    for (var i = 0; i < ENV.gameObjects.length; i++) {	    
-	ENV.gameObjects[i].update();
+    if (this.vrDisplay) {
+        this.vrDisplay.requestAnimationFrame(Env.prototype.animate.bind(this));
+        this.vrController();        
+    } else {
+        requestAnimationFrame(Env.prototype.animate.bind(this));            
     }
 
-    this.vrDisplay && this.vrController();
-    
-    if (this.preload) {
-        // in preload mode, update as fast as we can
-        if (this.vrDisplay) {
-            this.vrDisplay.requestAnimationFrame(Env.prototype.animate.bind(this));
-        } else {
-            requestAnimationFrame(Env.prototype.animate.bind(this));            
-        }
-    } else {
-        setTimeout(function() {
-            if (this.vrDisplay) {
-                this.vrDisplay.requestAnimationFrame(Env.prototype.animate.bind(this));
-            } else {
-                requestAnimationFrame(Env.prototype.animate.bind(this));            
-            }
-        }.bind(this), 1000 / 30);
-    }
-    //THREE.AnimationHandler.update( clock.getDelta() );        
+    // collect stats if requested
+    this.stats && this.stats.sample();
 }
 
-var vec = new THREE.Vector3();
+Env.prototype.animateObjects = function() {
+    
+    this.loop();
+    for (var i = 0; i < this.gameObjects.length; i++) {	    
+	this.gameObjects[i].update();
+    }
+
+    setTimeout(Env.prototype.animateObjects.bind(this), 1000/30);
+}
+
+var q = new THREE.Quaternion();
+var angle = new THREE.Euler();
 Env.prototype.vrController = function() {
     if (!this.data) this.data = new VRFrameData();
     
     this.vrDisplay.getFrameData(this.data);
+    
+    if (!this.data.pose.orientation) {
+        console.warn('data.pose.orientation is null');
+        return;
+    }
+    
     q.set(this.data.pose.orientation[0],
           this.data.pose.orientation[1],
           this.data.pose.orientation[2],
@@ -296,7 +311,7 @@ Env.prototype.setSky = function(path) {
         this.boxMesh.geometry.removeAttribute( 'uv' );
         this.boxMesh.material.uniforms.tCube.value = textureCube;
         this.camera.add(this.boxMesh);
-        //this.boxMesh.scale.set(100,100,100);
+        this.boxMesh.scale.set(100,100,100);
         //this.scene.add(this.boxMesh);
     }
     
@@ -594,7 +609,7 @@ Env.prototype.getMouseY = function() {
 
 Env.prototype.setDisplayStr = function(str) {
     //console.log("displaying "+str);
-    //this.hud.write(str);
+    this.hud.write(str);
 }
 
 Env.prototype.getObject = function(objClass) {
@@ -676,12 +691,12 @@ Env.prototype.setCrosshair = function(enabled) {
 }
 
 function createReticle() {
-    this.reticle = new THREE.Mesh(
+    let reticle = new THREE.Mesh(
         new THREE.RingBufferGeometry(0.03, 0.05, 15),
         new THREE.MeshBasicMaterial({ color: 0xffffff, depthTest: false, depthWrite: false})
     );
-    this.reticle.renderOrder = Number.MAX_SAFE_INTEGER;
-    this.reticle.position.set(0,0,-10);
+    reticle.renderOrder = Number.MAX_SAFE_INTEGER;
+    reticle.position.set(0,0,-10);
 
     return reticle;
 }
