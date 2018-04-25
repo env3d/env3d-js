@@ -1,6 +1,7 @@
 var THREE = require('three');
 require('../node_modules/three/examples/js/loaders/OBJLoader.js');
 require('../node_modules/three/examples/js/loaders/MTLLoader.js');
+require('../node_modules/three/examples/js/loaders/FBXLoader.js');
 
 var GameObject = function() {
     this.x = 0;
@@ -18,8 +19,15 @@ var GameObject = function() {
 
 GameObject.mtlLoader = new THREE.MTLLoader();
 GameObject.objLoader = new THREE.OBJLoader();
+GameObject.fbxLoader = new THREE.FBXLoader();
 GameObject.textureLoader = new THREE.TextureLoader();
 GameObject.textureLoader.crossOrigin = 'Anonymous';
+
+GameObject.standardFbxMaterial = new THREE.MeshStandardMaterial({
+    metalness: 0.82,
+    roughness: 1.00,
+    vertexColors: THREE.VertexColors
+});
 
 GameObject.modelsCache = {};
 GameObject.texturesCache = {};
@@ -32,27 +40,36 @@ GameObject.loadObj = function (model, mtl, callback) {
     if (mtl && !mtl.startsWith('http')) {
         mtl = env3d.Env.baseAssetsUrl+mtl;
     }
-    
+
     if (GameObject.modelsCache[model]) {
         callback.call(null,GameObject.modelsCache[model]);
     } else {
-        // load mtl if it is specified
-        if (mtl) {
-            var mtlLoader = new THREE.MTLLoader();
-            mtlLoader.setMaterialOptions({side: THREE.DoubleSide});
-            mtlLoader.load(mtl, function(materials) {
-                materials.preload();            
-                console.log('loading mtl', materials);
-                var objLoader = new THREE.OBJLoader();
-                objLoader.setMaterials(materials);
-                objLoader.load(model, function(m) {
+        if (model.endsWith('obj')) {
+            // load mtl if it is specified
+            if (mtl) {
+                var mtlLoader = new THREE.MTLLoader();
+                mtlLoader.setMaterialOptions({side: THREE.DoubleSide});
+                mtlLoader.load(mtl, function(materials) {
+                    materials.preload();            
+                    console.log('loading mtl', materials);
+                    var objLoader = new THREE.OBJLoader();
+                    objLoader.setMaterials(materials);
+                    objLoader.load(model, function(m) {
+                        GameObject.modelsCache[model] = m;            
+                        callback.call(null, m);
+                    });            
+                });
+            } else {
+                GameObject.objLoader.load(model, function(m) {
                     GameObject.modelsCache[model] = m;            
                     callback.call(null, m);
                 });            
-            });
-        } else {
-            GameObject.objLoader.load(model, function(m) {
-                GameObject.modelsCache[model] = m;            
+            }
+        } else if (model.endsWith('fbx')) {
+            console.log('loading', GameObject.fbxLoader);
+            GameObject.fbxLoader.load(model, function(m) {
+                console.log('loaded', m);
+                GameObject.modelsCache[model] = m;                
                 callback.call(null, m);
             });            
         }
@@ -150,14 +167,19 @@ GameObject.patchGameObject = function patchFun(gameobj) {
             gameobj.mesh.name = gameobj.model;            
 	    gameobj._model = gameobj.model;
 
-            if (gameobj.model.search("obj") > -1) {
+            if (gameobj.model.endsWith('obj') || gameobj.model.endsWith('fbx')) {
                 gameobj.mesh.children.length = 0;
                 
-                //objLoader.load(gameobj.model, function(o) {
                 GameObject.loadObj(gameobj.model, gameobj.mtl, function(o) {
                     
                     o.children.forEach(function(c) {
-                        if (gameobj.material) c.material = gameobj.material.clone();
+                        
+                        if (gameobj.model.endsWith('fbx')) {
+                            c.material = GameObject.standardFbxMaterial;
+                        } else {
+                            gameobj.material && (c.material = gameobj.material.clone());
+                        }
+                        
                         var clone = c.clone();
                         if (gameobj.mtl && gameobj.model.indexOf('tinker.obj') > -1) {
                             // if the mtl is present, we assume it's from tinkercad and
