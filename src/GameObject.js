@@ -26,7 +26,8 @@ GameObject.textureLoader.crossOrigin = 'Anonymous';
 GameObject.standardFbxMaterial = new THREE.MeshStandardMaterial({
     metalness: 0.82,
     roughness: 1.00,
-    vertexColors: THREE.VertexColors
+    vertexColors: THREE.VertexColors,
+    side: THREE.DoubleSide
 });
 
 GameObject.modelsCache = {};
