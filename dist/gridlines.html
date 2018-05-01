@@ -1,0 +1,102 @@
+<html>
+    <head>
+
+        <script src="js/env3d.js"></script>
+        
+        <script type="text/javascript">
+
+         window.addEventListener('load', function() {
+
+             var env = new env3d.Env();
+
+             var hLight = new THREE.HemisphereLight( 0xffffff, 0x000000);
+             hLight.intensity = 10;
+             env.scene.add(hLight);
+
+             window['env'] = env;
+             console.log(env);
+
+             
+             var geometry = new THREE.BufferGeometry();
+
+             var vertices = [];
+             var min = -1;
+             var max = 1;
+             for (let x = min; x <= max; x++) {
+                 for (let y = min; y <= max; y++) {
+                     vertices.push(x); vertices.push(y); vertices.push(min);
+                     vertices.push(x); vertices.push(y); vertices.push(max);
+
+                     vertices.push(x); vertices.push(min); vertices.push(y); 
+                     vertices.push(x); vertices.push(max); vertices.push(y); 
+
+                     vertices.push(min); vertices.push(x); vertices.push(y); 
+                     vertices.push(max); vertices.push(x); vertices.push(y);                      
+                 }
+             }
+             
+             // itemSize = 3 because there are 3 values (components) per vertex
+             geometry.addAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+
+             var mesh = new THREE.LineSegments(geometry);
+             mesh.material.color = new THREE.Color(1,1,1);
+             env.scene.add(mesh);
+             window['lines'] = mesh;
+
+             var point = new THREE.Points();
+             point.geometry.addAttribute('position', new THREE.Float32BufferAttribute([0,0,0],3));
+             point.material.size = 0.2;
+             point.material.color = new THREE.Color(1,1,1);
+             window['point'] = point;
+             env.scene.add(point);
+
+             
+             env.setRoom({
+                 textureNorth: null, textureEast: null, textureWest: null, textureTop: null, textureBottom: null
+             });
+             
+
+             env.setSky('textures/skybox/default');
+             env.setCrosshair(true);
+             
+             env.start();
+
+             env.setCameraXYZ(5,5,25);
+             env.addObject({
+                 x: 5, y:5, z:5,
+                 texture: 'models/tux/tux.png',
+                 model: 'models/tux/tux.obj'
+                 
+             });
+            
+
+             let pointPos = new THREE.Vector3();
+             let cameraDir = new THREE.Vector3();
+             //window['point'] = pointPos;
+             setInterval(() => {
+                 env.camera.getWorldDirection(cameraDir);
+                 pointPos.copy(env.camera.position);
+                 pointPos.add(cameraDir.multiplyScalar(10));
+                 point.position.x=Math.round(pointPos.x);
+                 point.position.y=Math.round(pointPos.y);
+                 point.position.z=Math.round(pointPos.z);
+                 
+                 mesh.position.x = point.position.x;
+                 mesh.position.y = point.position.y;
+                 mesh.position.z = point.position.z;
+                 
+             }, 32);
+             
+         });
+        </script>
+        <style>
+         body {
+             margin: 0;
+             padding: 0;
+         }
+        </style>
+    </head>
+    <body>
+        <div id="env3d"></div>
+    </body>
+</html>
