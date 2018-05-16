@@ -1,18 +1,20 @@
-window['THREE'] = require('three');
+import './three.js';
+import '../node_modules/three/examples/js/renderers/SoftwareRenderer.js';
+import '../node_modules/three/examples/js/renderers/Projector.js';
+import '../node_modules/three/examples/js/effects/VREffect.js';
+import '../node_modules/three/examples/js/loaders/OBJLoader.js';
+import '../node_modules/three/examples/js/loaders/MTLLoader.js';
+import '../node_modules/three/examples/js/loaders/FBXLoader.js';
 
-require('../node_modules/three/examples/js/renderers/SoftwareRenderer.js');
-require('../node_modules/three/examples/js/renderers/Projector.js');
-require('../node_modules/three/examples/js/effects/VREffect.js');
-
-var EnvGameObject = require('./GameObject.js');
-var DefaultRoom = require('./DefaultRoom.js');
-var Keyboard = require('./lwjgl-keyboard.js');
-var Hud = require('./hud.js');
-var DefaultControlHandlers = require('./DefaultControlHandlers.js');
-var Detector = require('../node_modules/three/examples/js/Detector.js');
-var LoadWorld = require('./LoadWorld.js');
-var VideoSphere = require('./VideoSphere.js');
-var Stats = require('./Stats.js');
+import {default as EnvGameObject} from './GameObject.js';
+import {default as DefaultRoom} from './DefaultRoom.js';
+import {default as Hud} from './hud.js';
+import {default as Keyboard} from './lwjgl-keyboard.js';
+import {default as DefaultControlHandlers} from './DefaultControlHandlers.js';
+import {default as Stats} from './Stats.js';
+import {default as Detector} from '../node_modules/three/examples/js/Detector.js';
+import {default as LoadWorld} from './LoadWorld.js';
+import {default as VideoSphere} from './VideoSphere.js';
 
 // If defaultRoom is true, create one
 var Env = function(defaultRoom) {
@@ -738,8 +740,6 @@ function createCrosshair() {
     return crosshair;
 }
 
-
-
 // The user will override this method to put in custom code
 Env.prototype.loop = function() {}
 
@@ -750,7 +750,7 @@ Env.prototype.advanceOneFrame = function() {}
 // access to textures/ models/ and sounds/
 Env.baseAssetsUrl = "";
 
-module.exports = Env;
+// module.exports = Env;
 
 // We create the env3d object, which will be "exported"
 // Since we are including it in HTML, we allow it
@@ -758,7 +758,11 @@ module.exports = Env;
 window['env3d'] = {};
 window['env3d'].Env = Env;
 
-var EnvObject = require('./EnvObject.js');
+import {default as EnvObject} from './EnvObject.js';
+//var EnvObject = require('./EnvObject.js');
 window['env3d'].EnvObject = EnvObject;
+window['env3d'].advanced = {};
+window['env3d'].advanced.EnvNode = EnvObject;
+window['org.lwjgl.input.Keyboard'] = Keyboard;
 
 

@@ -1,6 +1,3 @@
-var THREE = require('three');
-var Keyboard = require('./lwjgl-keyboard.js');
-
 var Hud = function(env, width, height) {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color( 0x500000 );

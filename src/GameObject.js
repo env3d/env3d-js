@@ -1,8 +1,3 @@
-var THREE = require('three');
-require('../node_modules/three/examples/js/loaders/OBJLoader.js');
-require('../node_modules/three/examples/js/loaders/MTLLoader.js');
-require('../node_modules/three/examples/js/loaders/FBXLoader.js');
-
 var GameObject = function() {
     this.x = 0;
     this.y = 0;
@@ -12,10 +7,9 @@ var GameObject = function() {
     this.rotateZ = 0;
     this.scale = 1;
     this.texture = "textures/earth.png";
-    this.model = "sphere";
-    
+    this.model = "sphere";    
     GameObject.patchGameObject(this);
-}   
+}
 
 GameObject.mtlLoader = new THREE.MTLLoader();
 GameObject.objLoader = new THREE.OBJLoader();
@@ -41,7 +35,7 @@ GameObject.loadObj = function (model, mtl, callback) {
     if (mtl && !mtl.startsWith('http')) {
         mtl = env3d.Env.baseAssetsUrl+mtl;
     }
-
+    
     if (GameObject.modelsCache[model]) {
         callback.call(null,GameObject.modelsCache[model]);
     } else {
@@ -52,7 +46,7 @@ GameObject.loadObj = function (model, mtl, callback) {
                 mtlLoader.setMaterialOptions({side: THREE.DoubleSide});
                 mtlLoader.load(mtl, function(materials) {
                     materials.preload();            
-                    console.log('loading mtl', materials);
+                    //console.log('loading mtl', materials);
                     var objLoader = new THREE.OBJLoader();
                     objLoader.setMaterials(materials);
                     objLoader.load(model, function(m) {
@@ -67,7 +61,7 @@ GameObject.loadObj = function (model, mtl, callback) {
                 });            
             }
         } else if (model.endsWith('fbx')) {
-            console.log('loading', GameObject.fbxLoader);
+            //console.log('loading', GameObject.fbxLoader);
             GameObject.fbxLoader.load(model, function(m) {
                 console.log('loaded', m);
                 GameObject.modelsCache[model] = m;                
@@ -167,10 +161,46 @@ GameObject.patchGameObject = function patchFun(gameobj) {
 	if (gameobj.model != gameobj._model) {
             gameobj.mesh.name = gameobj.model;            
 	    gameobj._model = gameobj.model;
+            
+            if (gameobj.model.endsWith('json')) {
+                // JSON file, needs alternative processing
+                // first fetch the json file
 
-            if (gameobj.model.endsWith('obj') || gameobj.model.endsWith('fbx')) {
+                fetch(gameobj.model).then( res => {
+                    return res.json();
+                }).then(json => {                    
+                    console.log('loading custom json asset', gameobj.model);
+                    gameobj.mesh.children.length = 0;
+                    let dir = gameobj.model.slice(0, gameobj.model.lastIndexOf('/')+1);
+                    json.Components.forEach( c => {
+                        let cmodel = dir+c.Asset; 
+                        console.log(cmodel, c);
+                        GameObject.loadObj(cmodel, null, o => {                            
+                            //console.log('loaded', o);
+                            let clone = o.clone();
+                            clone.position.set(c.Offset[0], c.Offset[1], c.Offset[2]);
+                            clone.scale.set(c.Scale[0], c.Scale[1], c.Scale[2]);                            
+                            clone.rotation.set(c.Rotation[0] * Math.PI / 180,
+                                               c.Rotation[1] * Math.PI / 180,
+                                               c.Rotation[2] * Math.PI / 180,
+                                               "XYZ");
+                            clone.children.forEach( c => {
+                                c.material = GameObject.standardFbxMaterial;
+                            });
+                            gameobj.mesh.add(clone);
+                        });
+                    });
+                    
+                });
+
+                
+            } else if (gameobj.model.endsWith('obj') || gameobj.model.endsWith('fbx')) {
+                // Simple object files
+
+                // first clear all the children
                 gameobj.mesh.children.length = 0;
                 
+                // now load the object
                 GameObject.loadObj(gameobj.model, gameobj.mtl, function(o) {
                     
                     o.children.forEach(function(c) {
@@ -200,4 +230,6 @@ GameObject.patchGameObject = function patchFun(gameobj) {
     }
 }
 
-module.exports = GameObject;
+
+export default GameObject;
+//module.exports = GameObject;

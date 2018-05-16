@@ -12,6 +12,7 @@
 
 
         <!-- <script src="js/j4ts-0.2.0-SNAPSHOT/bundle.js"></script> -->
+        <script src="js/inflate.min.js"></script>
         <script src="js/env3d.js"></script>
         <!-- <script src="WebVR.js"></script> -->
         <!-- <script src="js/env3d.min.js"></script> -->
@@ -43,8 +44,10 @@
              //env.renderer.vr.enabled = true;
 
              //env.initVRController();
-             
-             env.scene.add( new THREE.HemisphereLight( 0xffffff, 0xffffff ) );
+
+             let hemi = new THREE.HemisphereLight( 0xffffff, 0x000000 );
+             hemi.intensity = 10;
+             env.scene.add(hemi);
              
              // Lighting is required for mtl files to work
              var ambient = new THREE.AmbientLight( 0xfafafa ); 
@@ -64,13 +67,12 @@
              env.setSky('https://env3d.github.io/env3d-js/dist/textures/skybox/default');
 
              var a = {
-                 x: 5,
-                 y: 3,
+                 x: 0,
+                 y: 5,
                  z: 1,
                  rotateY: 0,
                  texture: null,
-                 mtl: 'http://api.operatoroverload.com/models/Intersection/materials.mtl',           
-                 model: 'http://api.operatoroverload.com/models/Intersection/intersection.obj'
+                 model: 'p_Test/assets/a_CubeTest.json'
              };
              
              env.addObject(a);
@@ -78,20 +80,26 @@
              var b = {
                  x: 5,
                  y: 5,
-                 z: 0
+                 z: 0,
+                 texture: null,
+                 model: 'p_Test/assets/a_CubeTest2.json'
              }
 
              env.addObject(b);
-             
+
+             /*
              env.loop = function() {
                  a.rotateY += 0.5;
              }
               
              let messages = ['hi bye','bye hi'];
              let i = 0;
+
+
              setInterval(() => {                 
                  env.setDisplayStr(messages[i++%messages.length]);
              }, 1000);
+             */
              
              env.start({vr: true});
 
