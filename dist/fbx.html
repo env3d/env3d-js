@@ -1,6 +1,7 @@
 <html>
     <head>
 
+        <script src="js/inflate.min.js"></script>
         <script src="js/env3d.js"></script>
         
         <script type="text/javascript">
@@ -32,6 +33,11 @@
                  x: 0, y: 0, z: 5,
                  texture: null,                 
                  model: 'models/fbx/testHouse_B.fbx'
+             });
+             env.addObject({
+                 x: 0, y: 0, z: 5,
+                 texture: null,                 
+                 model: 'https://env3d.github.io/env3d-blockly-models/e_four_seasons/e_four_seasons.json'
              });
 
              env.start();
