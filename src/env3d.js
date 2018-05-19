@@ -6,6 +6,11 @@ import '../node_modules/three/examples/js/loaders/OBJLoader.js';
 import '../node_modules/three/examples/js/loaders/MTLLoader.js';
 import '../node_modules/three/examples/js/loaders/FBXLoader.js';
 
+// experimenting with water
+import '../node_modules/three/examples/js/objects/Reflector.js';
+import '../node_modules/three/examples/js/objects/Refractor.js';
+import '../node_modules/three/examples/js/objects/Water2.js';
+
 import {default as EnvGameObject} from './GameObject.js';
 import {default as DefaultRoom} from './DefaultRoom.js';
 import {default as Hud} from './hud.js';
@@ -217,6 +222,7 @@ var q = new THREE.Quaternion();
 var angle = new THREE.Euler();
 Env.prototype.vrController = function() {
     if (!this.data) this.data = new VRFrameData();
+    if (!this.initYaw) this.initYaw = this.cameraYaw;
     
     this.vrDisplay.getFrameData(this.data);
     
@@ -235,7 +241,7 @@ Env.prototype.vrController = function() {
     var yaw = angle.y * 180/Math.PI;
     var pitch = angle.x * 180/Math.PI;
     var roll = angle.z * 180/Math.PI;                 
-    this.setCameraYaw(yaw);
+    this.setCameraYaw(this.initYaw + yaw);
     this.setCameraPitch(pitch);
     this.setCameraRoll(roll);
 }
@@ -414,7 +420,7 @@ Env.prototype.setRoom = function(room) {
 Env.prototype.addObject = function(obj) {
     
     obj.env = this;
-    if (obj instanceof EnvGameObject) {
+    if (obj instanceof EnvGameObject || obj instanceof EnvWater) {
 	this.scene.add(obj.mesh);
     } else {
         //console.log("patching obj");
@@ -759,10 +765,12 @@ window['env3d'] = {};
 window['env3d'].Env = Env;
 
 import {default as EnvObject} from './EnvObject.js';
-//var EnvObject = require('./EnvObject.js');
+import {default as EnvWater} from './EnvWater.js';
+
 window['env3d'].EnvObject = EnvObject;
 window['env3d'].advanced = {};
 window['env3d'].advanced.EnvNode = EnvObject;
+window['env3d'].advanced.EnvWater = EnvWater;
 window['org.lwjgl.input.Keyboard'] = Keyboard;
 
 

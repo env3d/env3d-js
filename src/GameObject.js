@@ -42,11 +42,13 @@ GameObject.loadObj = function (model, mtl, callback) {
         if (model.endsWith('obj')) {
             // load mtl if it is specified
             if (mtl) {
-                var mtlLoader = new THREE.MTLLoader();
+                var mtlLoader = GameObject.mtlLoader;
+                //var mtlLoader = new THREE.MTLLoader();
                 mtlLoader.setMaterialOptions({side: THREE.DoubleSide});
                 mtlLoader.load(mtl, function(materials) {
                     materials.preload();            
                     //console.log('loading mtl', materials);
+                    //var objLoader = GameObject.objLoader;
                     var objLoader = new THREE.OBJLoader();
                     objLoader.setMaterials(materials);
                     objLoader.load(model, function(m) {
@@ -183,7 +185,7 @@ GameObject.patchGameObject = function patchFun(gameobj) {
                             clone.rotation.set(c.Rotation[0] * Math.PI / 180,
                                                c.Rotation[1] * Math.PI / 180,
                                                c.Rotation[2] * Math.PI / 180,
-                                               "XYZ");
+                                               "YXZ");
                             clone.children.forEach( c => {
                                 c.material = GameObject.standardFbxMaterial;
                             });

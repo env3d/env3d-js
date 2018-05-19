@@ -6,17 +6,22 @@
         
         <script type="text/javascript">
 
+         envWater = new env3d.advanced.EnvWater({
+             scale: 1000,
+             rotateX: -90
+         });
+         
          window.addEventListener('load', function() {
 
              var env = new env3d.Env();
 
-             var hLight = new THREE.HemisphereLight( 0xffffff, 0x000000);
-             hLight.intensity = 10;
+	     //env.scene.add( water ); 
+             var hLight = new THREE.HemisphereLight( 0xffffff, 0x000000, 5);
              env.scene.add(hLight);
 
              var light = new THREE.DirectionalLight( 0xffffff);
              light.position.set( -4, -4, -4 ).normalize();
-             //env.scene.add( light );
+             env.scene.add( light );
                           
              window['env'] = env;
              console.log(env);
@@ -24,20 +29,27 @@
 
              env.setSky('textures/skybox/default');
              env.setRoom({textureNorth: null,textureTop: null, textureEast: null, textureWest: null});
+             env.addObject(envWater);
              env.addObject({
-                 scale: 1, x: 5, y: 0, z: 5,
+                 x: 0, y: 0, z: 0,
                  texture: null,
                  model: 'models/fbx/testHouse_A.fbx'
              });
              env.addObject({
-                 x: 0, y: 0, z: 5,
+                 x: -5, y: 0, z: 0,
                  texture: null,                 
                  model: 'models/fbx/testHouse_B.fbx'
              });
              env.addObject({
-                 x: 0, y: 0, z: 5,
+                 x: 0, y: 0, z: 0,
                  texture: null,                 
                  model: 'https://env3d.github.io/env3d-blockly-models/e_four_seasons/e_four_seasons.json'
+             });
+             
+             env.addObject({
+                 x: 5, y: 1, z: 5,
+                 texture: 'models/tux/tux.png',
+                 model: 'models/tux/tux.obj'
              });
 
              env.start();
