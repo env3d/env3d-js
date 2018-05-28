@@ -1,12 +1,12 @@
 var Hud = function(env, width, height) {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color( 0x500000 );
+    this.scene.background = new THREE.Color( 0x000000 );
 
     this.camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 10000 );
     
     this.hudCanvas = document.createElement('canvas');
-    this.hudCanvas.width = width; 
-    this.hudCanvas.height = height; 
+    this.hudCanvas.width = 512;
+    this.hudCanvas.height = 64 * 2;
     this.hudBitmap = this.hudCanvas.getContext('2d');
 
     /*
@@ -19,8 +19,8 @@ var Hud = function(env, width, height) {
     this.background = controllerImg;
     */
     
-    this.hudTexture = new THREE.Texture(this.hudCanvas);
-    this.hudTexture.needsUpdate = true;
+    this.hudTexture = new THREE.CanvasTexture(this.hudCanvas);
+    window['hud'] = this.hudTexture;
 
     this.material = new THREE.MeshBasicMaterial( {
         map: this.hudTexture,
@@ -30,10 +30,11 @@ var Hud = function(env, width, height) {
     } );
 
     
-    this.planeGeometry = new THREE.PlaneGeometry( width, height );
-    var mesh = new THREE.Mesh( this.planeGeometry, this.material )
-    mesh.position.set(0,0,-10);
-    mesh.scale.set(0.01,0.01,0.01);
+    this.planeGeometry = new THREE.PlaneGeometry( this.hudCanvas.width/100, this.hudCanvas.height/100 );
+    var mesh = new THREE.Mesh( this.planeGeometry, this.material );
+    mesh.position.set(0,2,-10);
+    let scale = 1;
+    mesh.scale.set(scale, scale, scale);
     mesh.renderOrder = Number.MAX_SAFE_INTEGER-1;
     this.mesh = mesh;
     this.scene.add(mesh);
@@ -116,16 +117,87 @@ Hud.prototype.write = function(str) {
     str = str || "";
     if (this.str != str) {
         this.str = str;
-        this.hudBitmap.clearRect(0,0,this.hudCanvas.width, this.hudCanvas.height);
+
+        let ctx = this.hudBitmap;
+        ctx.shadowColor = 'gray';
+        ctx.shadowOffsetY = 0;
+        ctx.shadowOffsetX = 0;
+
+        this.hudBitmap.clearRect(0,0,this.hudCanvas.width, this.hudCanvas.height);        
+        if (str.length > 0) {
+            this.hudBitmap.fillStyle = "rgba(255,255,255,0.8)";
+
+            let width = this.hudCanvas.width - 20;
+            let height = this.hudCanvas.height - 20;
+            roundRect(ctx, 10, 10, width, height, 20, true, true);
+            //this.hudBitmap.fillRect(0,0,this.hudCanvas.width,this.hudCanvas.height);            
+        }
+
         if (this.background) {
             this.hudBitmap.drawImage(this.background, 0, 0);
         }
-        this.hudBitmap.font = "Normal 40px Arial";
-        this.hudBitmap.textAlign = 'center';
-        this.hudBitmap.fillStyle = "rgba(245,245,245,0.75)";
-        this.hudBitmap.fillText(str, this.hudCanvas.width / 2, this.hudCanvas.height / 2);
+
+        ctx.shadowOffsetY = 1;
+        ctx.shadowOffsetX = 1;        
+        this.hudBitmap.font = "Normal 20pt Arial";
+        this.hudBitmap.textAlign = 'left';
+        this.hudBitmap.textBaseline = 'middle';
+        this.hudBitmap.fillStyle = "rgba(0,0,0,1)";
+        this.hudBitmap.fillText(str, this.hudCanvas.width / 20, this.hudCanvas.height / 2);
         this.hudTexture.needsUpdate = true;
     }
+}
+
+/**
+ * Draws a rounded rectangle using the current state of the canvas.
+ * If you omit the last three params, it will draw a rectangle
+ * outline with a 5 pixel border radius
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {Number} x The top left x coordinate
+ * @param {Number} y The top left y coordinate
+ * @param {Number} width The width of the rectangle
+ * @param {Number} height The height of the rectangle
+ * @param {Number} [radius = 5] The corner radius; It can also be an object 
+ *                 to specify different radii for corners
+ * @param {Number} [radius.tl = 0] Top left
+ * @param {Number} [radius.tr = 0] Top right
+ * @param {Number} [radius.br = 0] Bottom right
+ * @param {Number} [radius.bl = 0] Bottom left
+ * @param {Boolean} [fill = false] Whether to fill the rectangle.
+ * @param {Boolean} [stroke = true] Whether to stroke the rectangle.
+ */
+function roundRect(ctx, x, y, width, height, radius, fill, stroke) { 
+    if (typeof stroke == 'undefined') {
+        stroke = true; 
+    }
+    if (typeof radius === 'undefined') {
+        radius = 5;
+    }
+    if (typeof radius === 'number') {
+        radius = {tl: radius, tr: radius, br: radius, bl: radius};
+    } else {
+        var defaultRadius = {tl: 0, tr: 0, br: 0, bl: 0};
+        for (var side in defaultRadius) {
+            radius[side] = radius[side] || defaultRadius[side];
+        }
+    }
+    ctx.beginPath();
+    ctx.moveTo(x + radius.tl, y);
+    ctx.lineTo(x + width - radius.tr, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+    ctx.lineTo(x + width, y + height - radius.br);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
+    ctx.lineTo(x + radius.bl, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+    ctx.lineTo(x, y + radius.tl);
+    ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+    ctx.closePath();
+    if (fill) {
+        ctx.fill();
+    }
+    if (stroke) {
+        ctx.stroke(); 
+    } 
 }
 
 module.exports = Hud;

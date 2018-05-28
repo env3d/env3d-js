@@ -46,8 +46,12 @@ GameObject.loadObj = function (model, mtl, callback) {
                 //var mtlLoader = new THREE.MTLLoader();
                 mtlLoader.setMaterialOptions({side: THREE.DoubleSide});
                 mtlLoader.load(mtl, function(materials) {
-                    materials.preload();            
-                    //console.log('loading mtl', materials);
+                    materials.preload();
+                    // fix the kd from obj for compatibility
+                    Object.values(materials.materials).forEach( m => {
+                        m.color.multiplyScalar(env3d.Env.objDiffuseMultiplier);
+                    });
+                    console.log('loading mtl', materials);
                     //var objLoader = GameObject.objLoader;
                     var objLoader = new THREE.OBJLoader();
                     objLoader.setMaterials(materials);

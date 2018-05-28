@@ -1,0 +1,124 @@
+<html>
+    <head>
+
+        <script src="../js/inflate.min.js"></script>
+        <script src="../js/env3d.js"></script>
+        
+        <script type="text/javascript">
+
+         function setShadow(o, options) {
+             o.mesh.traverse( c => {
+                 if (c instanceof THREE.Mesh) {
+                     c.geometry.computeVertexNormals();
+                     if (!options || options.cast) {
+                         c.castShadow = true;
+                     }
+                     if (!options || options.receive) {
+                         c.receiveShadow = true;
+                     }
+                     c.material.needsUpdate = true;
+                 }
+             });
+         }
+         
+         window.addEventListener('load', function() {
+
+             env3d.Env.objDiffuseMultiplier = 0.3;
+             var env = new env3d.Env();
+
+             env.renderer.shadowMap.enabled = true;
+             //env.renderer.shadowMapSoft = true;
+             
+             env.scene.add(new THREE.HemisphereLight( 0xffffff, 0x000000, 5));
+             //env.scene.add(new THREE.AmbientLight(0x666666, 10));
+
+             dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
+	     //dirLight.color.setHSL( 0.1, 1, 0.95 );
+	     dirLight.position.set( -1, 1.75, 1 );
+	     dirLight.position.multiplyScalar( 100 );
+             env.scene.add( dirLight );
+             
+	     dirLight.castShadow = true;
+	     dirLight.shadow.mapSize.width = 2048;
+	     dirLight.shadow.mapSize.height = 2048;
+             
+	     var d = 100;
+	     dirLight.shadow.camera.left = -d;
+	     dirLight.shadow.camera.right = d;
+	     dirLight.shadow.camera.top = d;
+	     dirLight.shadow.camera.bottom = -d;
+	     dirLight.shadow.camera.far = 3500;
+	     dirLight.shadow.bias = -0.0001;
+             
+	     dirLightHeper = new THREE.DirectionalLightHelper( dirLight, 10 );
+	     env.scene.add( dirLightHeper );              
+             
+             window['env'] = env;
+             console.log(env);
+             
+             env.setRoom( {
+                 textureNorth: null, textureTop: null,
+                 textureEast: null, textureWest: null,
+                 textureBottom: null
+             } );
+             
+             //env.setSky('../textures/skybox/default');
+
+             let rio =  {
+                 x: 0, y: 0, z: 0, scale: 10,
+                 texture: null,
+                 //model: 'https://env3d.github.io/env3d-blockly-models/e_four_seasons/e_four_seasons.json'
+                 model: 'https://env3d.github.io/env3d-blockly-models/rio/model-triangulated.obj',
+                 mtl: 'https://env3d.github.io/env3d-blockly-models/rio/materials.mtl'
+             };
+             
+             let inter =  {
+                 x: 0, y: 0, z: 0, scale: 5,
+                 texture: null,
+                 model: 'https://env3d.github.io/env3d-blockly-models/intersection/intersection.obj',
+                 mtl: 'https://env3d.github.io/env3d-blockly-models/intersection/materials.mtl'
+             };             
+             
+             let four =  {
+                 x: 5, y: 0.1, z: 5, scale: 1,
+                 texture: null,
+                 model: 'https://env3d.github.io/env3d-blockly-models/e_four_seasons/e_four_seasons.json'
+             };
+
+             let world = rio;
+             
+             env.addObject(world);
+             
+             let tux = {
+                 x:5, y: 1, z: 2,
+                 texture: 'https://env3d.github.io/env3d-js/dist/models/tux/tux.png',
+                 model: 'https://env3d.github.io/env3d-js/dist/models/tux/tux.obj'
+             };
+             env.addObject(tux);
+             
+             console.log('mesh',world.mesh.children.length);
+             env.start();
+             env.setCameraXYZ(5,5,25);
+             
+             let frame = 0;
+             env.loop = function() {
+                 frame++;
+                 if (frame == 60) {
+                     setShadow(world, {cast: true, receive: true});
+                     setShadow(tux, {cast:true, receive: false});
+                 }
+             }
+             
+         });
+        </script>
+        <style>
+         body {
+             margin: 0;
+             padding: 0;
+         }
+        </style>
+    </head>
+    <body>
+        <div id="env3d"></div>
+    </body>
+</html>

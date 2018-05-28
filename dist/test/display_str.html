@@ -1,0 +1,62 @@
+<html>
+    <head>
+
+        <script src="../js/inflate.min.js"></script>
+        <script src="../js/env3d.js"></script>
+        
+        <script type="text/javascript">
+
+         window.addEventListener('load', function() {
+
+             var env = new env3d.Env();
+
+             var hLight = new THREE.HemisphereLight( 0xffffff, 0x000000, 5);
+             env.scene.add(hLight);
+
+             var light = new THREE.DirectionalLight( 0xffffff);
+             light.position.set( -4, -4, -4 ).normalize();
+             env.scene.add( light );
+                          
+             window['env'] = env;
+             console.log(env);             
+
+             env.setSky('../textures/skybox/default');
+             env.setRoom({
+                 textureNorth: null,textureTop: null,
+                 textureEast: null, textureWest: null,
+                 textureBottom: null
+             });
+             env.addObject({
+                 x: 5, y: 1, z: 5,
+                 texture: '../models/tux/tux.png',
+                 model: '../models/tux/tux.obj'
+             });
+             
+             env.addObject({
+                 x: 0, y: 0, z: 0, scale: 1,
+                 texture: null,
+                 model: 'https://env3d.github.io/env3d-blockly-models/e_four_seasons/e_four_seasons.json'
+             }); 
+
+             env.start();
+             env.setCameraXYZ(5,5,25);
+
+             let messages = ['Hello\nhi', 'Goodbye', 'blah', ''];
+             i = 0;
+             setInterval( () => {
+                 env.setDisplayStr(messages[i++ % messages.length]);
+             }, 2000);
+             
+         });
+        </script>
+        <style>
+         body {
+             margin: 0;
+             padding: 0;
+         }
+        </style>
+    </head>
+    <body>
+        <div id="env3d"></div>
+    </body>
+</html>

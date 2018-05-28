@@ -49240,7 +49240,11 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 					mtlLoader.setMaterialOptions({ side: THREE.DoubleSide });
 					mtlLoader.load(mtl, function (materials) {
 						materials.preload();
-						//console.log('loading mtl', materials);
+						// fix the kd from obj for compatibility
+						Object.values(materials.materials).forEach(function (m) {
+							m.color.multiplyScalar(env3d.Env.objDiffuseMultiplier);
+						});
+						console.log('loading mtl', materials);
 						//var objLoader = GameObject.objLoader;
 						var objLoader = new THREE.OBJLoader();
 						objLoader.setMaterials(materials);
@@ -49435,13 +49439,13 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 	var Hud = function Hud(env, width, height) {
 		this.scene = new THREE.Scene();
-		this.scene.background = new THREE.Color(0x500000);
+		this.scene.background = new THREE.Color(0x000000);
 
 		this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000);
 
 		this.hudCanvas = document.createElement('canvas');
-		this.hudCanvas.width = width;
-		this.hudCanvas.height = height;
+		this.hudCanvas.width = 512;
+		this.hudCanvas.height = 64 * 2;
 		this.hudBitmap = this.hudCanvas.getContext('2d');
 
 		/*
@@ -49454,8 +49458,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   this.background = controllerImg;
   */
 
-		this.hudTexture = new THREE.Texture(this.hudCanvas);
-		this.hudTexture.needsUpdate = true;
+		this.hudTexture = new THREE.CanvasTexture(this.hudCanvas);
+		window['hud'] = this.hudTexture;
 
 		this.material = new THREE.MeshBasicMaterial({
 			map: this.hudTexture,
@@ -49464,10 +49468,11 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			depthTest: false
 		});
 
-		this.planeGeometry = new THREE.PlaneGeometry(width, height);
+		this.planeGeometry = new THREE.PlaneGeometry(this.hudCanvas.width / 100, this.hudCanvas.height / 100);
 		var mesh = new THREE.Mesh(this.planeGeometry, this.material);
-		mesh.position.set(0, 0, -10);
-		mesh.scale.set(0.01, 0.01, 0.01);
+		mesh.position.set(0, 2, -10);
+		var scale = 1;
+		mesh.scale.set(scale, scale, scale);
 		mesh.renderOrder = Number.MAX_SAFE_INTEGER - 1;
 		this.mesh = mesh;
 		this.scene.add(mesh);
@@ -49548,17 +49553,88 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 		str = str || "";
 		if (this.str != str) {
 			this.str = str;
+
+			var ctx = this.hudBitmap;
+			ctx.shadowColor = 'gray';
+			ctx.shadowOffsetY = 0;
+			ctx.shadowOffsetX = 0;
+
 			this.hudBitmap.clearRect(0, 0, this.hudCanvas.width, this.hudCanvas.height);
+			if (str.length > 0) {
+				this.hudBitmap.fillStyle = "rgba(255,255,255,0.8)";
+
+				var width = this.hudCanvas.width - 20;
+				var height = this.hudCanvas.height - 20;
+				roundRect(ctx, 10, 10, width, height, 20, true, true);
+				//this.hudBitmap.fillRect(0,0,this.hudCanvas.width,this.hudCanvas.height);            
+			}
+
 			if (this.background) {
 				this.hudBitmap.drawImage(this.background, 0, 0);
 			}
-			this.hudBitmap.font = "Normal 40px Arial";
-			this.hudBitmap.textAlign = 'center';
-			this.hudBitmap.fillStyle = "rgba(245,245,245,0.75)";
-			this.hudBitmap.fillText(str, this.hudCanvas.width / 2, this.hudCanvas.height / 2);
+
+			ctx.shadowOffsetY = 1;
+			ctx.shadowOffsetX = 1;
+			this.hudBitmap.font = "Normal 20pt Arial";
+			this.hudBitmap.textAlign = 'left';
+			this.hudBitmap.textBaseline = 'middle';
+			this.hudBitmap.fillStyle = "rgba(0,0,0,1)";
+			this.hudBitmap.fillText(str, this.hudCanvas.width / 20, this.hudCanvas.height / 2);
 			this.hudTexture.needsUpdate = true;
 		}
 	};
+
+	/**
+  * Draws a rounded rectangle using the current state of the canvas.
+  * If you omit the last three params, it will draw a rectangle
+  * outline with a 5 pixel border radius
+  * @param {CanvasRenderingContext2D} ctx
+  * @param {Number} x The top left x coordinate
+  * @param {Number} y The top left y coordinate
+  * @param {Number} width The width of the rectangle
+  * @param {Number} height The height of the rectangle
+  * @param {Number} [radius = 5] The corner radius; It can also be an object 
+  *                 to specify different radii for corners
+  * @param {Number} [radius.tl = 0] Top left
+  * @param {Number} [radius.tr = 0] Top right
+  * @param {Number} [radius.br = 0] Bottom right
+  * @param {Number} [radius.bl = 0] Bottom left
+  * @param {Boolean} [fill = false] Whether to fill the rectangle.
+  * @param {Boolean} [stroke = true] Whether to stroke the rectangle.
+  */
+	function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+		if (typeof stroke == 'undefined') {
+			stroke = true;
+		}
+		if (typeof radius === 'undefined') {
+			radius = 5;
+		}
+		if (typeof radius === 'number') {
+			radius = { tl: radius, tr: radius, br: radius, bl: radius };
+		} else {
+			var defaultRadius = { tl: 0, tr: 0, br: 0, bl: 0 };
+			for (var side in defaultRadius) {
+				radius[side] = radius[side] || defaultRadius[side];
+			}
+		}
+		ctx.beginPath();
+		ctx.moveTo(x + radius.tl, y);
+		ctx.lineTo(x + width - radius.tr, y);
+		ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+		ctx.lineTo(x + width, y + height - radius.br);
+		ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
+		ctx.lineTo(x + radius.bl, y + height);
+		ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+		ctx.lineTo(x, y + radius.tl);
+		ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+		ctx.closePath();
+		if (fill) {
+			ctx.fill();
+		}
+		if (stroke) {
+			ctx.stroke();
+		}
+	}
 
 	var hud = Hud;
 
@@ -49791,7 +49867,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 			this.cameraX -= speed * Math.sin(this.camera.rotation.y);
 		} else if (e.keyCode == 83) {
 			//S
-			console.log("going backwards", this);
 			this.cameraZ += speed * Math.cos(this.camera.rotation.y);
 			this.cameraX += speed * Math.sin(this.camera.rotation.y);
 		} else if (e.keyCode == 65) {
@@ -50323,8 +50398,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 				scale: 4,
 				flowDirection: new THREE.Vector2(1, 1),
 				textureWidth: 1024,
-				textureHeight: 1024,
-				shader: shader
+				textureHeight: 1024
 			});
 			this.mesh.rotation.order = "YXZ";
 		}
@@ -50765,55 +50839,40 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 	// Moves the camera along the path specified by pointsArray,
 	// the camera will be facing the endAngle
-	Env.prototype.moveCameraAlongPath = function (pointsArray, endAngle, callback) {
-		var cameraMotionPath;
-		if (pointsArray.length == 2) {
-			// only 2 points, we use a LineCurve3            
-			cameraMotionPath = new THREE.LineCurve3(pointsArray[0], pointsArray[1]);
-		} else if (pointsArray.length == 3) {
-			// 3 points, use a CubicCurve
-			cameraMotionPath = new THREE.QuadraticBezierCurve3(pointsArray[0], pointsArray[1], pointsArray[2]);
-		} else {
-			// we must have lots of points, use spline
-			console.warn("spline points need to be implemented!");
-		}
-
-		// determine which direction to turn
-		var startDirection = this.camera.rotation.toVector3().clone();
-		var endDirection = endAngle.clone();
-
-		startDirection.x %= Math.PI * 2;startDirection.y %= Math.PI * 2;startDirection.z %= Math.PI * 2;
-		endDirection.x %= Math.PI * 2;endDirection.y %= Math.PI * 2;endDirection.z %= Math.PI * 2;
-
-		if (Math.abs(startDirection.y - endDirection.y) > Math.PI) {
-			if (startDirection.y < endDirection.y) {
-				startDirection.y += Math.PI * 2;
+	Env.prototype.moveCameraAlongPath = function (pointsArray, speed, callback) {
+		return new Promise(function (resolve, reject) {
+			if (!speed) speed = 0.1;
+			var cameraMotionPath;
+			if (pointsArray.length == 2) {
+				// only 2 points, we use a LineCurve3            
+				cameraMotionPath = new THREE.LineCurve3(pointsArray[0], pointsArray[1]);
+			} else if (pointsArray.length == 3) {
+				// 3 points, use a CubicCurve
+				cameraMotionPath = new THREE.QuadraticBezierCurve3(pointsArray[0], pointsArray[1], pointsArray[2]);
 			} else {
-				endDirection.y += Math.PI * 2;
+				// we must have lots of points, use spline
+				console.warn("spline points need to be implemented!");
 			}
-		}
 
-		var cameraDirectionPath = new THREE.LineCurve3(startDirection, endDirection);
-
-		this.moveCameraAlongPathHelper(cameraMotionPath, cameraDirectionPath, callback, 0);
+			this.moveCameraAlongPathHelper(cameraMotionPath, speed, function () {
+				resolve();
+			}, 0);
+		}.bind(this));
 	};
 
+	var nextPos = new THREE.Vector3();
 	// path to follow
 	// t between 0 and 1
-	Env.prototype.moveCameraAlongPathHelper = function (motionPath, directionPath, callBack, t) {
+	Env.prototype.moveCameraAlongPathHelper = function (motionPath, speed, callBack, t) {
 		if (t === undefined) t = 0;
-		var speed = 0.01;
-		var nextPos = motionPath.getPoint(t);
-		var nextDir = directionPath.getPoint(t);
+		motionPath.getPointAt(t, nextPos);
 		this.cameraX = nextPos.x;
 		this.cameraY = nextPos.y;
 		this.cameraZ = nextPos.z;
-		this.cameraPitch = nextDir.x;
-		this.cameraYaw = nextDir.y;
 		var self = this;
 		if (t + speed < 1) {
 			setTimeout(function () {
-				self.moveCameraAlongPathHelper(motionPath, directionPath, callBack, t + speed);
+				self.moveCameraAlongPathHelper(motionPath, speed, callBack, t + speed);
 			}, 16);
 		} else {
 			if (callBack) {
@@ -50930,6 +50989,58 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 		this.hud.write(str);
 	};
 
+	function createTimer() {
+		var vertShader = '\nvarying vec2 vUv;\nvoid main() {\n  vUv = uv;\n  gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n}\n';
+
+		var fragShader = '\nuniform float percent; \nvarying vec2 vUv;\n\nvoid main() {\n  float t;\n  //gl_FragColor = vec4(1, 1, 1, percent);\n  if (percent < 0.25) {\n    if (vUv.x > 0.5 && vUv.y > 0.5) { \n      t = 1.0;\n    } else {\n      t = 0.0;\n    }\n  } else if (percent < 0.5) {\n    if (vUv.x > 0.5) {\n      t = 1.0;\n    } else {\n      t = 0.0;\n    }\n  } else if (percent < 0.75) {\n    if (vUv.x < 0.5 && vUv.y > 0.5) {\n      t = 0.0;\n    } else {\n      t = 1.0;\n    }\n  } else {\n    t = 1.0;\n  }\n\n  // https://stackoverflow.com/questions/4200224/random-noise-functions-for-glsl#4275343 \n  //float c = fract(sin(dot(vUv ,vec2(12.9898,78.233))) * 43758.5453) * 1.5;\n//  float x = log( (abs(vUv.x - 0.5) / 0.5) * 2.718281828459 );\n//  float y = log( (abs(vUv.y - 0.5) / 0.5) * 2.718281828459 );\n//  float c = sqrt(pow(x, 2.0) + pow(y, 2.0));\n//  float c = y;\n  float x = vUv.x - 0.5;\n  float y = vUv.y - 0.5;;\n  float c = sqrt(pow(x, 2.0) + pow(y, 2.0));\n  c *= pow(8.0, c);\n  gl_FragColor = vec4(c, c, c, t);\n  \n}\n';
+
+		this.percent = 1;
+		this.setPercent = function (p) {
+			this.material.uniforms.percent.value = p;
+		};
+		this.material = new THREE.ShaderMaterial({
+			uniforms: { percent: { value: 0.4 } },
+			vertexShader: vertShader,
+			fragmentShader: fragShader,
+			transparent: true,
+			vertexColors: true,
+			depthTest: false,
+			depthWrite: false
+		});
+
+		function ring() {
+			var reticle = new THREE.Mesh(new THREE.RingBufferGeometry(0.07, 0.14, 15, 8, 0, Math.PI * 2),
+			//new THREE.PlaneGeometry(1,1),
+			this.material);
+			reticle.renderOrder = Number.MAX_SAFE_INTEGER;
+			reticle.position.set(0, 0, -10);
+
+			return reticle;
+		}
+
+		var group = new THREE.Group();
+		group.add(ring.apply(this));
+		group.name = 'timer bar';
+
+		this.mesh = group;
+		//return group;
+	}
+
+	// Displays an arc in the middle of the screen
+	// Good for VR timer
+	Env.prototype.setTimer = function (percent) {
+		//console.log("displaying "+str);
+		if (!this.timer) this.timer = new createTimer();
+		if (percent > 0) {
+			this.camera.add(this.timer.mesh);
+			this.timer.setPercent(percent);
+			//this.timer.material.uniforms.percent.value = percent;
+		} else {
+			// remove the timer ring
+			this.camera.remove(this.timer.mesh);
+		}
+	};
+
 	Env.prototype.getObject = function (objClass) {
 		for (var i = 0; i < this.gameObjects.length; i++) {
 			var obj = this.gameObjects[i];
@@ -51011,9 +51122,19 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 	};
 
 	function createReticle() {
-		var reticle = new THREE.Mesh(new THREE.RingBufferGeometry(0.03, 0.05, 15), new THREE.MeshBasicMaterial({ color: 0xffffff, depthTest: false, depthWrite: false }));
+
+		var reticle = new THREE.Object3D();
 		reticle.renderOrder = Number.MAX_SAFE_INTEGER;
 		reticle.position.set(0, 0, -10);
+		reticle.name = 'crosshair';
+
+		reticle.add(new THREE.Mesh(new THREE.RingBufferGeometry(0.03, 0.05, 15), new THREE.MeshBasicMaterial({ color: 0xf9f9f9, depthTest: false, depthWrite: false })));
+
+		reticle.add(new THREE.Mesh(new THREE.RingBufferGeometry(0.05, 0.07, 15), new THREE.MeshBasicMaterial({ color: 0x0f0f0f, depthTest: false, depthWrite: false })));
+
+		reticle.children.forEach(function (c) {
+			c.renderOrder = Number.MAX_SAFE_INTEGER;
+		});
 
 		return reticle;
 	}
@@ -51027,6 +51148,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 	// This is prepeneded to all
 	// access to textures/ models/ and sounds/
 	Env.baseAssetsUrl = "";
+
+	// Allow user to control OBJ material color
+	// We need this to balance loading of models
+	Env.objDiffuseMultiplier = 1;
 
 	// module.exports = Env;
 

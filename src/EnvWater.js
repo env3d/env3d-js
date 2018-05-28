@@ -166,8 +166,7 @@ export default class EnvWater {
 	    scale: 4,
 	    flowDirection: new THREE.Vector2( 1, 1 ),
 	    textureWidth: 1024,
-	    textureHeight: 1024,
-            shader: shader
+	    textureHeight: 1024
 	} );
         this.mesh.rotation.order = "YXZ";
     }
