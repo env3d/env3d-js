@@ -29,7 +29,7 @@
              env.renderer.shadowMap.enabled = true;
              //env.renderer.shadowMapSoft = true;
              
-             env.scene.add(new THREE.HemisphereLight( 0xffffff, 0x000000, 5));
+             env.scene.add(new THREE.HemisphereLight( 0xffffff, 0x000000, 10));
              //env.scene.add(new THREE.AmbientLight(0x666666, 10));
 
              dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
@@ -85,7 +85,7 @@
                  model: 'https://env3d.github.io/env3d-blockly-models/e_four_seasons/e_four_seasons.json'
              };
 
-             let world = rio;
+             let world = four;
              
              env.addObject(world);
              
@@ -104,10 +104,20 @@
              env.loop = function() {
                  frame++;
                  if (frame == 60) {
+                     env.setDisplayStr('WASD to move, "L" to toggle shadow');
                      setShadow(world, {cast: true, receive: true});
                      setShadow(tux, {cast:true, receive: false});
                  }
              }
+
+             window.addEventListener('keydown', evt => {
+                 env.setDisplayStr('');                 
+             });
+             
+             window.addEventListener('keyup', evt => {
+                 if(evt && evt.code == 'KeyL') dirLight.castShadow = !dirLight.castShadow;
+             });
+             
              
          });
         </script>
