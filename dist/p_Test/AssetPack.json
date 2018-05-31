@@ -1,0 +1,18 @@
+{
+	"AssetPackID": "p_Test",
+	"Assets":
+	[
+		{
+			"asset": "assets/a_CubeTest.json",
+			"icon": "assets/a_CubeTest.jpg",
+			"name": "Cube Test",
+			"description": "Simple Cubes with various transforms."
+		},
+		{
+			"asset": "assets/a_CubeTest2.json",
+			"icon": "assets/a_CubeTest2.jpg",
+			"name": "Another Cube Test",
+			"description": "The same cubes with more extreme transformations."
+		}
+	]
+}

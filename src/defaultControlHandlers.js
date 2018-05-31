@@ -37,7 +37,6 @@ function keydown(e) {
 	this.cameraZ -= speed*Math.cos(this.camera.rotation.y);
 	this.cameraX -= speed*Math.sin(this.camera.rotation.y);
     } else if (e.keyCode == 83) { //S
-        console.log("going backwards",this);
 	this.cameraZ += speed*Math.cos(this.camera.rotation.y);
 	this.cameraX += speed*Math.sin(this.camera.rotation.y);
     } else if (e.keyCode == 65) { //A

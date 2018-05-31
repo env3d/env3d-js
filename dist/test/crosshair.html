@@ -1,0 +1,55 @@
+<html>
+    <head>
+
+        <script src="../js/inflate.min.js"></script>
+        <script src="../js/env3d.js"></script>
+        
+        <script type="text/javascript">
+
+         window.addEventListener('load', function() {
+             
+             env3d.Env.objDiffuseMultiplier = 0.3;
+             var env = new env3d.Env();
+             env.scene.add(new THREE.HemisphereLight( 0xffffff, 0x000000, 10));
+             
+             env.setCrosshair(true);
+             
+             window['env'] = env;
+             console.log(env);
+
+             env.setRoom( {
+                 textureNorth: null, textureTop: null,
+                 textureEast: null, textureWest: null,
+                 textureBottom: null
+             } );
+
+             
+             let four =  {
+                 x: 0, y: 0, z: 0, scale: 1,
+                 texture: null,
+                 model: 'https://env3d.github.io/env3d-blockly-models/e_four_seasons/e_four_seasons.json'
+             };
+
+             let world = four;
+             
+             env.addObject(world);
+             
+             let frame = 0;
+             env.loop = function() {
+                 env.setTimer( (frame++%60) /60);                 
+             }
+
+             env.start();
+         });
+        </script>
+        <style>
+         body {
+             margin: 0;
+             padding: 0;
+         }
+        </style>
+    </head>
+    <body>
+        <div id="env3d"></div>
+    </body>
+</html>

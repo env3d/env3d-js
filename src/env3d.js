@@ -1,18 +1,25 @@
-window['THREE'] = require('three');
+import './three.js';
+import '../node_modules/three/examples/js/renderers/SoftwareRenderer.js';
+import '../node_modules/three/examples/js/renderers/Projector.js';
+import '../node_modules/three/examples/js/effects/VREffect.js';
+import '../node_modules/three/examples/js/loaders/OBJLoader.js';
+import '../node_modules/three/examples/js/loaders/MTLLoader.js';
+import '../node_modules/three/examples/js/loaders/FBXLoader.js';
 
-require('../node_modules/three/examples/js/renderers/SoftwareRenderer.js');
-require('../node_modules/three/examples/js/renderers/Projector.js');
-require('../node_modules/three/examples/js/effects/VREffect.js');
+// experimenting with water
+import '../node_modules/three/examples/js/objects/Reflector.js';
+import '../node_modules/three/examples/js/objects/Refractor.js';
+import '../node_modules/three/examples/js/objects/Water2.js';
 
-var EnvGameObject = require('./GameObject.js');
-var DefaultRoom = require('./DefaultRoom.js');
-var Keyboard = require('./lwjgl-keyboard.js');
-var Hud = require('./hud.js');
-var DefaultControlHandlers = require('./DefaultControlHandlers.js');
-var Detector = require('../node_modules/three/examples/js/Detector.js');
-var LoadWorld = require('./LoadWorld.js');
-var VideoSphere = require('./VideoSphere.js');
-var Stats = require('./Stats.js');
+import {default as EnvGameObject} from './GameObject.js';
+import {default as DefaultRoom} from './DefaultRoom.js';
+import {default as Hud} from './hud.js';
+import {default as Keyboard} from './lwjgl-keyboard.js';
+import {default as DefaultControlHandlers} from './DefaultControlHandlers.js';
+import {default as Stats} from './Stats.js';
+import {default as Detector} from '../node_modules/three/examples/js/Detector.js';
+import {default as LoadWorld} from './LoadWorld.js';
+import {default as VideoSphere} from './VideoSphere.js';
 
 // If defaultRoom is true, create one
 var Env = function(defaultRoom) {
@@ -215,6 +222,7 @@ var q = new THREE.Quaternion();
 var angle = new THREE.Euler();
 Env.prototype.vrController = function() {
     if (!this.data) this.data = new VRFrameData();
+    if (!this.initYaw) this.initYaw = this.cameraYaw;
     
     this.vrDisplay.getFrameData(this.data);
     
@@ -233,7 +241,7 @@ Env.prototype.vrController = function() {
     var yaw = angle.y * 180/Math.PI;
     var pitch = angle.x * 180/Math.PI;
     var roll = angle.z * 180/Math.PI;                 
-    this.setCameraYaw(yaw);
+    this.setCameraYaw(this.initYaw + yaw);
     this.setCameraPitch(pitch);
     this.setCameraRoll(roll);
 }
@@ -412,7 +420,7 @@ Env.prototype.setRoom = function(room) {
 Env.prototype.addObject = function(obj) {
     
     obj.env = this;
-    if (obj instanceof EnvGameObject) {
+    if (obj instanceof EnvGameObject || obj instanceof EnvWater) {
 	this.scene.add(obj.mesh);
     } else {
         //console.log("patching obj");
@@ -442,59 +450,40 @@ Env.prototype.clearScene = function() {
 
 // Moves the camera along the path specified by pointsArray,
 // the camera will be facing the endAngle
-Env.prototype.moveCameraAlongPath = function(pointsArray, endAngle, callback) {
-    var cameraMotionPath;
-    if (pointsArray.length == 2) {
-        // only 2 points, we use a LineCurve3            
-        cameraMotionPath = new THREE.LineCurve3(
-            pointsArray[0],pointsArray[1]
-        );
-    } else if (pointsArray.length == 3) {
-        // 3 points, use a CubicCurve
-        cameraMotionPath = new THREE.QuadraticBezierCurve3(pointsArray[0],pointsArray[1],pointsArray[2]);            
-    } else {
-        // we must have lots of points, use spline
-        console.warn("spline points need to be implemented!");
-    }
-
-    // determine which direction to turn
-    var startDirection = this.camera.rotation.toVector3().clone();                  
-    var endDirection = endAngle.clone();
-    
-    startDirection.x %= Math.PI*2; startDirection.y %= Math.PI*2; startDirection.z %= Math.PI*2;        
-    endDirection.x %= Math.PI*2; endDirection.y %= Math.PI*2; endDirection.z %= Math.PI*2;                                    
-    
-    if (Math.abs(startDirection.y-endDirection.y) > Math.PI) {
-        if (startDirection.y < endDirection.y) {
-            startDirection.y += Math.PI*2;
+Env.prototype.moveCameraAlongPath = function(pointsArray, speed, callback) {
+    return new Promise(function(resolve, reject) {
+        if (!speed) speed = 0.1;    
+        var cameraMotionPath;
+        if (pointsArray.length == 2) {
+            // only 2 points, we use a LineCurve3            
+            cameraMotionPath = new THREE.LineCurve3(
+                pointsArray[0],pointsArray[1]
+            );
+        } else if (pointsArray.length == 3) {
+            // 3 points, use a CubicCurve
+            cameraMotionPath = new THREE.QuadraticBezierCurve3(pointsArray[0],pointsArray[1],pointsArray[2]);
         } else {
-            endDirection.y += Math.PI*2;
+            // we must have lots of points, use spline
+            console.warn("spline points need to be implemented!");
         }
-    }
-
-    var cameraDirectionPath = new THREE.LineCurve3(
-        startDirection, endDirection
-    );
-    
-    this.moveCameraAlongPathHelper(cameraMotionPath, cameraDirectionPath, callback, 0);
+        
+        this.moveCameraAlongPathHelper(cameraMotionPath, speed, ()=>{resolve()}, 0);        
+    }.bind(this));
 }
 
+var nextPos = new THREE.Vector3();
 // path to follow
 // t between 0 and 1
-Env.prototype.moveCameraAlongPathHelper = function(motionPath, directionPath, callBack, t) {
+Env.prototype.moveCameraAlongPathHelper = function(motionPath, speed, callBack, t) {
     if (t === undefined) t = 0;
-    var speed = 0.01;
-    var nextPos = motionPath.getPoint(t);
-    var nextDir = directionPath.getPoint(t);
+    motionPath.getPointAt(t, nextPos);
     this.cameraX = nextPos.x;
     this.cameraY = nextPos.y;
     this.cameraZ = nextPos.z;
-    this.cameraPitch = nextDir.x;
-    this.cameraYaw = nextDir.y;
     var self = this;
     if (t+speed < 1) {
         setTimeout(function() {
-            self.moveCameraAlongPathHelper(motionPath, directionPath, callBack, t+speed);
+            self.moveCameraAlongPathHelper(motionPath, speed, callBack, t+speed);
         }, 16);
     } else {
         if (callBack) {
@@ -612,6 +601,109 @@ Env.prototype.setDisplayStr = function(str) {
     this.hud.write(str);
 }
 
+function createTimer() {
+    let vertShader = `
+varying vec2 vUv;
+void main() {
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+}
+`;
+    
+    let fragShader = `
+uniform float percent; 
+varying vec2 vUv;
+
+void main() {
+  float t;
+  //gl_FragColor = vec4(1, 1, 1, percent);
+  if (percent < 0.25) {
+    if (vUv.x > 0.5 && vUv.y > 0.5) { 
+      t = 1.0;
+    } else {
+      t = 0.0;
+    }
+  } else if (percent < 0.5) {
+    if (vUv.x > 0.5) {
+      t = 1.0;
+    } else {
+      t = 0.0;
+    }
+  } else if (percent < 0.75) {
+    if (vUv.x < 0.5 && vUv.y > 0.5) {
+      t = 0.0;
+    } else {
+      t = 1.0;
+    }
+  } else {
+    t = 1.0;
+  }
+
+  // https://stackoverflow.com/questions/4200224/random-noise-functions-for-glsl#4275343 
+  //float c = fract(sin(dot(vUv ,vec2(12.9898,78.233))) * 43758.5453) * 1.5;
+//  float x = log( (abs(vUv.x - 0.5) / 0.5) * 2.718281828459 );
+//  float y = log( (abs(vUv.y - 0.5) / 0.5) * 2.718281828459 );
+//  float c = sqrt(pow(x, 2.0) + pow(y, 2.0));
+//  float c = y;
+  float x = vUv.x - 0.5;
+  float y = vUv.y - 0.5;;
+  float c = sqrt(pow(x, 2.0) + pow(y, 2.0));
+  c *= pow(8.0, c);
+  gl_FragColor = vec4(c, c, c, t);
+  
+}
+`;
+
+    this.percent = 1;
+    this.setPercent = function(p) {
+        this.material.uniforms.percent.value = p;
+    }
+    this.material = new THREE.ShaderMaterial({
+        uniforms: { percent: {value: 0.4} },
+        vertexShader: vertShader,
+	fragmentShader: fragShader,
+        transparent: true,
+        vertexColors: true,
+        depthTest: false,
+        depthWrite: false
+    });
+    
+    function ring() {
+        let reticle = new THREE.Mesh(
+            new THREE.RingBufferGeometry(0.07, 0.14, 15, 8, 0, Math.PI*2),
+            //new THREE.PlaneGeometry(1,1),
+            this.material
+        );        
+        reticle.renderOrder = Number.MAX_SAFE_INTEGER;
+        reticle.position.set(0,0,-10);
+        
+        return reticle;
+    }
+
+    let group = new THREE.Group();
+    group.add(ring.apply(this));
+    group.name = 'timer bar';
+
+    this.mesh = group;
+    //return group;
+}
+
+// Displays an arc in the middle of the screen
+// Good for VR timer
+Env.prototype.setTimer = function(percent) {
+    //console.log("displaying "+str);
+    if (!this.timer) this.timer = new createTimer();
+    if (percent > 0) {
+        this.camera.add(this.timer.mesh);
+        this.timer.setPercent(percent);
+        //this.timer.material.uniforms.percent.value = percent;
+    } else {
+        // remove the timer ring
+        this.camera.remove(this.timer.mesh);
+    }
+}
+
+
 Env.prototype.getObject = function(objClass) {
     for (var i=0; i<this.gameObjects.length; i++) {
         var obj = this.gameObjects[i];
@@ -691,13 +783,26 @@ Env.prototype.setCrosshair = function(enabled) {
 }
 
 function createReticle() {
-    let reticle = new THREE.Mesh(
-        new THREE.RingBufferGeometry(0.03, 0.05, 15),
-        new THREE.MeshBasicMaterial({ color: 0xffffff, depthTest: false, depthWrite: false})
-    );
+
+    let reticle = new THREE.Object3D();
     reticle.renderOrder = Number.MAX_SAFE_INTEGER;
     reticle.position.set(0,0,-10);
+    reticle.name = 'crosshair';
 
+    reticle.add(new THREE.Mesh(
+        new THREE.RingBufferGeometry(0.03, 0.05, 15),
+        new THREE.MeshBasicMaterial({ color: 0xf9f9f9, depthTest: false, depthWrite: false})
+    ));
+    
+    reticle.add(new THREE.Mesh(
+        new THREE.RingBufferGeometry(0.05, 0.07, 15),
+        new THREE.MeshBasicMaterial({ color: 0x0f0f0f, depthTest: false, depthWrite: false})
+    ));
+
+    reticle.children.forEach( c => {
+        c.renderOrder = Number.MAX_SAFE_INTEGER;        
+    });
+    
     return reticle;
 }
 
@@ -738,8 +843,6 @@ function createCrosshair() {
     return crosshair;
 }
 
-
-
 // The user will override this method to put in custom code
 Env.prototype.loop = function() {}
 
@@ -750,7 +853,11 @@ Env.prototype.advanceOneFrame = function() {}
 // access to textures/ models/ and sounds/
 Env.baseAssetsUrl = "";
 
-module.exports = Env;
+// Allow user to control OBJ material color
+// We need this to balance loading of models
+Env.objDiffuseMultiplier = 1;
+
+// module.exports = Env;
 
 // We create the env3d object, which will be "exported"
 // Since we are including it in HTML, we allow it
@@ -758,7 +865,13 @@ module.exports = Env;
 window['env3d'] = {};
 window['env3d'].Env = Env;
 
-var EnvObject = require('./EnvObject.js');
+import {default as EnvObject} from './EnvObject.js';
+import {default as EnvWater} from './EnvWater.js';
+
 window['env3d'].EnvObject = EnvObject;
+window['env3d'].advanced = {};
+window['env3d'].advanced.EnvNode = EnvObject;
+window['env3d'].advanced.EnvWater = EnvWater;
+window['org.lwjgl.input.Keyboard'] = Keyboard;
 
 

@@ -146,4 +146,4 @@
     EnvObject["__class"] = "env3d.EnvObject";
 
     module.exports = EnvObject;
-})(env3d || (env3d = {}));
+})({});
