@@ -12,7 +12,7 @@
     "browserify": "browserify src/env3d.js -o dist/js/env3d.js -d",
     "watch": "watchify src/env3d.js -o dist/js/env3d.js -d",
     "lite": "cd dist; lite-server",
-    "rollup": "rollup -w -c rollup.config.js",
+    "rollup": "rollup -c -w",
     "start": "run-p rollup lite"
   },
   "repository": {

@@ -214,7 +214,7 @@ Env.prototype.animateObjects = function() {
     for (var i = 0; i < this.gameObjects.length; i++) {	    
 	this.gameObjects[i].update();
     }
-
+    
     setTimeout(Env.prototype.animateObjects.bind(this), 1000/30);
 }
 
@@ -256,20 +256,22 @@ Env.prototype.debugCameraPosition = function() {
 
 Env.prototype.setDefaultControl = function(control) {
     console.warn('setting default control to '+control);
-
+    
     this.defaultControl = control;
     
     if (control) {
         document.addEventListener('mousedown', this.mousedownhandler, false);
         document.addEventListener('mousemove', this.mousemovehandler, false);
         document.addEventListener('mouseup', this.mouseuphandler, false);
-        document.addEventListener('keydown', this.keydownhandler, false);        
+        document.addEventListener('keydown', this.keydownhandler, false);
+        document.addEventListener('keyup', this.keyuphandler, false);                
     } else {
         console.log('disabling control');
         document.removeEventListener('mousedown', this.mousedownhandler, false);
         document.removeEventListener('mousemove', this.mousemovehandler, false);
         document.removeEventListener('mouseup', this.mouseuphandler, false);
-        document.removeEventListener('keydown', this.keydownhandler, false);                
+        document.removeEventListener('keydown', this.keydownhandler, false);
+        document.removeEventListener('keyup', this.keyuphandler, false);        
     }
 }
 

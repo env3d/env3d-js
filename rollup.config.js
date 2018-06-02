@@ -7,7 +7,7 @@ export default {
     watch: {
         include: 'src/**',
         clearScreen: false,
-        chokidar: true
+        chokidar: false
     },
     output: {
         file: 'dist/js/env3d.js',
@@ -16,6 +16,8 @@ export default {
     },
     plugins: [
         resolve(),
-        commonjs()
+        commonjs({
+            include: ['src/**', 'node_modules/**']
+        })
     ]
 };
