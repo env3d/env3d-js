@@ -876,4 +876,3 @@ window['env3d'].advanced.EnvNode = EnvObject;
 window['env3d'].advanced.EnvWater = EnvWater;
 window['org.lwjgl.input.Keyboard'] = Keyboard;
 
-

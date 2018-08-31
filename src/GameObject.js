@@ -1,3 +1,6 @@
+import {default as JSZip} from '../node_modules/jszip/dist/jszip.min.js';
+import {default as JSZipUtils} from '../node_modules/jszip-utils/dist/jszip-utils.min.js';
+
 var GameObject = function() {
     this.x = 0;
     this.y = 0;
@@ -16,6 +19,7 @@ GameObject.objLoader = new THREE.OBJLoader();
 GameObject.fbxLoader = new THREE.FBXLoader();
 GameObject.textureLoader = new THREE.TextureLoader();
 GameObject.textureLoader.crossOrigin = 'Anonymous';
+
 
 GameObject.standardFbxMaterial = new THREE.MeshStandardMaterial({
     metalness: 0.82,
@@ -39,7 +43,24 @@ GameObject.loadObj = function (model, mtl, callback) {
     if (GameObject.modelsCache[model]) {
         callback.call(null,GameObject.modelsCache[model]);
     } else {
-        if (model.endsWith('obj')) {
+        if (model.endsWith('zip')) {
+            JSZipUtils.getBinaryContent(model, function(err, data) {
+                let z = new JSZip();
+                z.loadAsync(data).then(function(zip) {
+                    zip.file('obj.mtl').async('string').then((mtl) => {
+                        zip.file('tinker.obj').async('string').then((f) => {
+                            // f is the text version of the file
+                            let materials = GameObject.mtlLoader.parse(mtl);
+                            let m = GameObject.objLoader.setMaterials(materials).parse(f);
+                            console.log('model loaded from zip', m);
+                            GameObject.modelsCache[model] = m;                            
+                            callback.call(null, m);
+                        });                        
+                    });
+                });
+            });
+            
+        } else if (model.endsWith('obj')) {
             // load mtl if it is specified
             if (mtl) {
                 var mtlLoader = GameObject.mtlLoader;
@@ -200,7 +221,10 @@ GameObject.patchGameObject = function patchFun(gameobj) {
                 });
 
                 
-            } else if (gameobj.model.endsWith('obj') || gameobj.model.endsWith('fbx')) {
+            } else if (gameobj.model.endsWith('obj') ||
+                       gameobj.model.endsWith('fbx') ||
+                       gameobj.model.endsWith('zip') )
+            {
                 // Simple object files
 
                 // first clear all the children
@@ -218,7 +242,9 @@ GameObject.patchGameObject = function patchFun(gameobj) {
                         }
                         
                         var clone = c.clone();
-                        if (gameobj.mtl && gameobj.model.indexOf('tinker.obj') > -1) {
+                        if (gameobj.model.endsWith('zip') ||
+                            (gameobj.mtl && gameobj.model.indexOf('tinker.obj') > -1))
+                        {
                             // if the mtl is present, we assume it's from tinkercad and
                             // perform automatic scaling and rotation
                             console.log(clone);
