@@ -51,6 +51,11 @@ GameObject.loadObj = function (model, mtl, callback) {
                         zip.file('tinker.obj').async('string').then((f) => {
                             // f is the text version of the file
                             let materials = GameObject.mtlLoader.parse(mtl);
+                            materials.preload();
+                            // fix the kd from obj for compatibility
+                            Object.values(materials.materials).forEach( m => {
+                                m.color.multiplyScalar(env3d.Env.objDiffuseMultiplier);
+                            });                            
                             let m = GameObject.objLoader.setMaterials(materials).parse(f);
                             console.log('model loaded from zip', m);
                             GameObject.modelsCache[model] = m;                            
