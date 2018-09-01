@@ -845,6 +845,36 @@ function createCrosshair() {
     return crosshair;
 }
 
+// Audio section
+const audioCache = {}
+
+function getSoundFile(soundFile) {
+    if (!audioCache[soundFile]) {
+        audioCache[soundFile] = new Audio(soundFile);        
+    }
+
+    return audioCache[soundFile];
+}
+
+Env.prototype.soundPlay = function(soundFile) {
+    let s = getSoundFile(soundFile);
+    s.loop = false;
+    s.play();
+}
+
+Env.prototype.soundLoop = function(soundFile) {
+    let s = getSoundFile(soundFile);
+    s.loop = true;
+    s.play();    
+}
+
+Env.prototype.soundStop = function(soundFile) {
+    let s = getSoundFile(soundFile);
+    s.pause();    
+}
+// End Audio section
+
+
 // The user will override this method to put in custom code
 Env.prototype.loop = function() {}
 
