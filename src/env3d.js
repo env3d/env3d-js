@@ -5,6 +5,7 @@ import '../node_modules/three/examples/js/effects/VREffect.js';
 import '../node_modules/three/examples/js/loaders/OBJLoader.js';
 import '../node_modules/three/examples/js/loaders/MTLLoader.js';
 import '../node_modules/three/examples/js/loaders/FBXLoader.js';
+import '../node_modules/three/examples/js/loaders/ColladaLoader.js';
 
 // experimenting with water
 import '../node_modules/three/examples/js/objects/Reflector.js';

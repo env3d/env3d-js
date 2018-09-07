@@ -1,6 +1,23 @@
 import {default as JSZip} from '../node_modules/jszip/dist/jszip.min.js';
 import {default as JSZipUtils} from '../node_modules/jszip-utils/dist/jszip-utils.min.js';
 
+class ZipManager extends THREE.LoadingManager {
+    
+    constructor() {
+        super();
+        this.assets = {};        
+
+        this.setURLModifier( ( url ) => {
+            let dataUrl = this.assets[url];
+            return dataUrl ? dataUrl : url;
+            
+        } );
+    }
+}
+
+// Initialize loading manager with URL callback.
+var objectURLs = [];
+
 var GameObject = function() {
     this.x = 0;
     this.y = 0;
@@ -14,9 +31,14 @@ var GameObject = function() {
     GameObject.patchGameObject(this);
 }
 
+// Custom loading manager
+GameObject.loadingManager = new ZipManager(); 
+THREE.DefaultLoadingManager = GameObject.loadingManager;
+
 GameObject.mtlLoader = new THREE.MTLLoader();
 GameObject.objLoader = new THREE.OBJLoader();
 GameObject.fbxLoader = new THREE.FBXLoader();
+GameObject.daeLoader = new THREE.ColladaLoader();
 GameObject.textureLoader = new THREE.TextureLoader();
 GameObject.textureLoader.crossOrigin = 'Anonymous';
 
@@ -47,29 +69,66 @@ GameObject.loadObj = function (model, mtl, callback) {
             JSZipUtils.getBinaryContent(model, function(err, data) {
                 let z = new JSZip();
                 z.loadAsync(data).then(function(zip) {
-                    zip.file('obj.mtl').async('string').then((mtl) => {
-                        zip.file('tinker.obj').async('string').then((f) => {
-                            // f is the text version of the file
-                            let materials = GameObject.mtlLoader.parse(mtl);
-                            materials.preload();
-                            // fix the kd from obj for compatibility
-                            Object.values(materials.materials).forEach( m => {
-                                m.color.multiplyScalar(env3d.Env.objDiffuseMultiplier);
-                            });                            
-                            let m = GameObject.objLoader.setMaterials(materials).parse(f);
-                            console.log('model loaded from zip', m);
-                            GameObject.modelsCache[model] = m;                            
-                            callback.call(null, m);
-                        });                        
-                    });
+                    console.log(zip.files);
+                    if (zip.files['tinker.obj'] && zip.files['obj.mtl']) {
+                        // We have a tinkercad file                        
+                        zip.file('obj.mtl').async('string').then((mtl) => {
+                            zip.file('tinker.obj').async('string').then((f) => {
+                                // f is the text version of the file
+                                let materials = GameObject.mtlLoader.parse(mtl);
+                                materials.preload();
+                                // fix the kd from obj for compatibility
+                                Object.values(materials.materials).forEach( m => {
+                                    m.color.multiplyScalar(env3d.Env.objDiffuseMultiplier);
+                                });                            
+                                let m = GameObject.objLoader.setMaterials(materials).parse(f);
+                                console.log('model loaded from zip', m);
+                                GameObject.modelsCache[model] = m;                            
+                                callback.call(null, m);
+                            });                        
+                        });
+                    } else if (zip.files['model.dae']) {
+                        // we have a sketchup collada export
+                        console.log('processing collada');
+                        
+                        zip.file('model.dae').async('string')
+                           .then((dae) => {
+                               let assetPromises = [];
+
+                               // preload all the images
+                               Object.keys(zip.files).filter(
+                                   f => f.startsWith('model/')
+                               ).forEach( f => {
+                                   // put all the loading promises into an array
+                                   assetPromises.push(
+                                       zip.file(f).async('base64').then(
+                                           data => {
+                                               return new Promise(function(resolve, reject) {
+                                                   // http://www.jstips.co/en/javascript/get-file-extension/ 
+                                                   var extension = f.slice( ( f.lastIndexOf( '.' ) - 1 >>> 0 ) + 2 ); 
+                                                   extension = extension.toLowerCase();
+                                                   resolve([f,`data:image/${extension};base64,${data}`]);
+                                               });
+                                           })
+                                   );
+                               });
+                               Promise.all(assetPromises).then( (assets) => {
+                                   // Only proceed when all the images are loaded
+                                   // keep a cache of all images
+                                   assets.forEach( asset => GameObject.loadingManager.assets[asset[0]] = asset[1] );
+                                   let m = GameObject.daeLoader.parse(dae);
+                                   GameObject.modelsCache[model] = m.scene;
+                                   callback.call(null, m.scene);                                   
+                               });
+                           });
+                    }
                 });
             });
             
         } else if (model.endsWith('obj')) {
-            // load mtl if it is specified
             if (mtl) {
+                // load mtl if it is specified                
                 var mtlLoader = GameObject.mtlLoader;
-                //var mtlLoader = new THREE.MTLLoader();
                 mtlLoader.setMaterialOptions({side: THREE.DoubleSide});
                 mtlLoader.load(mtl, function(materials) {
                     materials.preload();
@@ -87,6 +146,7 @@ GameObject.loadObj = function (model, mtl, callback) {
                     });            
                 });
             } else {
+                // Without MTL file
                 GameObject.objLoader.load(model, function(m) {
                     GameObject.modelsCache[model] = m;            
                     callback.call(null, m);
@@ -99,6 +159,12 @@ GameObject.loadObj = function (model, mtl, callback) {
                 GameObject.modelsCache[model] = m;                
                 callback.call(null, m);
             });            
+        } else if (model.endsWith('dae')) {
+            GameObject.daeLoader.load(model, function(m) {
+                console.log('dae loaded', m);
+                GameObject.modelsCache[model] = m.scene;
+                callback.call(null, m.scene);
+            });
         }
     }
 
@@ -228,7 +294,8 @@ GameObject.patchGameObject = function patchFun(gameobj) {
                 
             } else if (gameobj.model.endsWith('obj') ||
                        gameobj.model.endsWith('fbx') ||
-                       gameobj.model.endsWith('zip') )
+                       gameobj.model.endsWith('zip') ||
+                       gameobj.model.endsWith('dae') )
             {
                 // Simple object files
 
@@ -247,7 +314,7 @@ GameObject.patchGameObject = function patchFun(gameobj) {
                         }
                         
                         var clone = c.clone();
-                        if (gameobj.model.endsWith('zip') ||
+                        if (gameobj.model.endsWith('zip') || gameobj.model.endsWith('dae') ||
                             (gameobj.mtl && gameobj.model.indexOf('tinker.obj') > -1))
                         {
                             // if the mtl is present, we assume it's from tinkercad and
@@ -257,7 +324,7 @@ GameObject.patchGameObject = function patchFun(gameobj) {
                             clone.scale.y = 0.1;
                             clone.scale.z = 0.1;
                             clone.rotation.x = -(Math.PI/2);
-                        }
+                        }                        
                         gameobj.mesh.add(clone);
                     });                        
                 });
