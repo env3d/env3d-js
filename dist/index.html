@@ -1,6 +1,6 @@
 <html>
     <head>
-
+        <script src="js/inflate.min.js"></script>
         <script src="js/env3d.js"></script>
         
         <script type="text/javascript">
@@ -18,8 +18,10 @@
              //this.model = "models/tux/tux.obj";
 
              this.texture = null;
+             
              this.mtl = "models/testobj/obj.mtl";
              this.model = "models/testobj/tinker.obj";
+             //this.model = 'http://api.operatoroverload.com/models/363-601.zip';
              
              this.move = function() {
                  this.y = Math.abs(Math.sin(this.frame)) + 1;
@@ -93,7 +95,8 @@
                  y: 3,
                  z: 5,
                  texture: null,
-                 model: 'http://api.operatoroverload.com/models/363-601.zip'
+                 //model: 'http://api.operatoroverload.com/models/363-601.zip'
+                 model: 'https://env3d.github.io/env3d-blockly-models/ap_Vehicles/assets/a_airplane_aa.json' 
              });
              
              
@@ -104,7 +107,7 @@
                  texture: null,
                  model: 'http://api.operatoroverload.com/models/Mattiazzi%20Quindici%20Lounge%20Chair.zip'
              });
-             
+
              env.start();
              env.setCameraXYZ(5,5,25);
              

@@ -118,6 +118,21 @@ GameObject.loadObj = function (model, mtl, callback) {
                                    assets.forEach( asset => GameObject.loadingManager.assets[asset[0]] = asset[1] );
                                    let m = GameObject.daeLoader.parse(dae);
                                    GameObject.modelsCache[model] = m.scene;
+                                   function traverseMaterial(model) {
+                                       console.log(model.material);
+                                       if (model.material) {
+                                           if (!Array.isArray(model.material)) {
+                                               model.material.color.multiplyScalar(env3d.Env.daeDiffuseMultiplier);
+                                           } else {
+                                               model.material.forEach(
+                                                   m => m.color.multiplyScalar(env3d.Env.daeDiffuseMultiplier)
+                                               );
+                                           }
+                                       }
+                                       model.children.forEach( c => traverseMaterial(c) );
+                                   }
+                                   traverseMaterial(m.scene);
+                                   console.log(m.scene);
                                    callback.call(null, m.scene);                                   
                                });
                            });
@@ -157,6 +172,20 @@ GameObject.loadObj = function (model, mtl, callback) {
             GameObject.fbxLoader.load(model, function(m) {
                 console.log('loaded', m);
                 GameObject.modelsCache[model] = m;                
+                function traverseMaterial(model) {
+                    console.log('traversing', model);
+                    if (model.material) {
+                        if (!Array.isArray(model.material)) {
+                            model.material.color.multiplyScalar(env3d.Env.fbxDiffuseMultiplier);
+                        } else {
+                            model.material.forEach(
+                                m => m.color.multiplyScalar(env3d.Env.fbxDiffuseMultiplier)
+                            );
+                        }
+                    }
+                    model.children.forEach( c => traverseMaterial(c) );
+                }
+                traverseMaterial(m);
                 callback.call(null, m);
             });            
         } else if (model.endsWith('dae')) {

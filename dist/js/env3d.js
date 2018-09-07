@@ -45709,6 +45709,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 				// The blender exporter exports diffuse here instead of in properties.Diffuse
 				parameters.color = new THREE.Color().fromArray(properties.DiffuseColor.value);
 			}
+
 			if (properties.DisplacementFactor) {
 
 				parameters.displacementScale = properties.DisplacementFactor.value;
@@ -45737,6 +45738,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 				// The blender exporter exports emissive color here instead of in properties.Emissive
 				parameters.emissive = new THREE.Color().fromArray(properties.EmissiveColor.value);
 			}
+
 			if (properties.EmissiveFactor) {
 
 				parameters.emissiveIntensity = parseFloat(properties.EmissiveFactor.value);
@@ -46076,8 +46078,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 				if (colorInfo) {
 
 					var data = getData(polygonVertexIndex, polygonIndex, vertexIndex, colorInfo);
-
-					faceColors.push(data[0], data[1], data[2]);
+					// JM: Modified this line to allow custom vertex color adjustment
+					faceColors.push(data[0] * env3d.Env.fbxDiffuseMultiplier, data[1] * env3d.Env.fbxDiffuseMultiplier, data[2] * env3d.Env.fbxDiffuseMultiplier);
 				}
 
 				if (skeleton) {
@@ -55048,6 +55050,23 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 									});
 									var m = GameObject.daeLoader.parse(dae);
 									GameObject.modelsCache[model] = m.scene;
+									function traverseMaterial(model) {
+										console.log(model.material);
+										if (model.material) {
+											if (!Array.isArray(model.material)) {
+												model.material.color.multiplyScalar(env3d.Env.daeDiffuseMultiplier);
+											} else {
+												model.material.forEach(function (m) {
+													return m.color.multiplyScalar(env3d.Env.daeDiffuseMultiplier);
+												});
+											}
+										}
+										model.children.forEach(function (c) {
+											return traverseMaterial(c);
+										});
+									}
+									traverseMaterial(m.scene);
+									console.log(m.scene);
 									callback.call(null, m.scene);
 								});
 							});
@@ -55086,6 +55105,22 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 				GameObject.fbxLoader.load(model, function (m) {
 					console.log('loaded', m);
 					GameObject.modelsCache[model] = m;
+					function traverseMaterial(model) {
+						console.log('traversing', model);
+						if (model.material) {
+							if (!Array.isArray(model.material)) {
+								model.material.color.multiplyScalar(env3d.Env.fbxDiffuseMultiplier);
+							} else {
+								model.material.forEach(function (m) {
+									return m.color.multiplyScalar(env3d.Env.fbxDiffuseMultiplier);
+								});
+							}
+						}
+						model.children.forEach(function (c) {
+							return traverseMaterial(c);
+						});
+					}
+					traverseMaterial(m);
 					callback.call(null, m);
 				});
 			} else if (model.endsWith('dae')) {
@@ -56952,7 +56987,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 		var camera = this.camera;
 		this.gameObjects.forEach(function (obj) {
-			var intersects = raycaster.intersectObjects(obj.mesh.children);
+			var intersects = raycaster.intersectObjects(obj.mesh.children, true);
 			if (intersects.length > 0) {
 				// for each object, we calculate the distance to the camera
 				pickObjects.push({
@@ -57048,6 +57083,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 	// Allow user to control OBJ material color
 	// We need this to balance loading of models
 	Env.objDiffuseMultiplier = 1;
+	Env.daeDiffuseMultiplier = 1;
+	Env.fbxDiffuseMultiplier = 1;
 
 	// module.exports = Env;
 

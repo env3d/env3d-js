@@ -4,7 +4,9 @@ import '../node_modules/three/examples/js/renderers/Projector.js';
 import '../node_modules/three/examples/js/effects/VREffect.js';
 import '../node_modules/three/examples/js/loaders/OBJLoader.js';
 import '../node_modules/three/examples/js/loaders/MTLLoader.js';
-import '../node_modules/three/examples/js/loaders/FBXLoader.js';
+//import '../node_modules/three/examples/js/loaders/FBXLoader.js';
+// Custom FBXLoader
+import './FBXLoader.js';
 import '../node_modules/three/examples/js/loaders/ColladaLoader.js';
 
 // experimenting with water
@@ -752,7 +754,7 @@ Env.prototype.getPick = function(x, y) {
 
     var camera = this.camera;
     this.gameObjects.forEach(function(obj) {
-        var intersects = raycaster.intersectObjects(obj.mesh.children);
+        var intersects = raycaster.intersectObjects(obj.mesh.children, true);
         if (intersects.length > 0) {
             // for each object, we calculate the distance to the camera
             pickObjects.push({
@@ -889,6 +891,8 @@ Env.baseAssetsUrl = "";
 // Allow user to control OBJ material color
 // We need this to balance loading of models
 Env.objDiffuseMultiplier = 1;
+Env.daeDiffuseMultiplier = 1;
+Env.fbxDiffuseMultiplier = 1;
 
 // module.exports = Env;
 
