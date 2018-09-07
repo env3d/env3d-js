@@ -69,7 +69,7 @@ GameObject.loadObj = function (model, mtl, callback) {
             JSZipUtils.getBinaryContent(model, function(err, data) {
                 let z = new JSZip();
                 z.loadAsync(data).then(function(zip) {
-                    console.log(zip.files);
+                    //console.log(zip.files);
                     if (zip.files['tinker.obj'] && zip.files['obj.mtl']) {
                         // We have a tinkercad file                        
                         zip.file('obj.mtl').async('string').then((mtl) => {
@@ -82,14 +82,14 @@ GameObject.loadObj = function (model, mtl, callback) {
                                     m.color.multiplyScalar(env3d.Env.objDiffuseMultiplier);
                                 });                            
                                 let m = GameObject.objLoader.setMaterials(materials).parse(f);
-                                console.log('model loaded from zip', m);
+                                //console.log('model loaded from zip', m);
                                 GameObject.modelsCache[model] = m;                            
                                 callback.call(null, m);
                             });                        
                         });
                     } else if (zip.files['model.dae']) {
                         // we have a sketchup collada export
-                        console.log('processing collada');
+                        //console.log('processing collada');
                         
                         zip.file('model.dae').async('string')
                            .then((dae) => {
@@ -119,7 +119,6 @@ GameObject.loadObj = function (model, mtl, callback) {
                                    let m = GameObject.daeLoader.parse(dae);
                                    GameObject.modelsCache[model] = m.scene;
                                    function traverseMaterial(model) {
-                                       console.log(model.material);
                                        if (model.material) {
                                            if (!Array.isArray(model.material)) {
                                                model.material.color.multiplyScalar(env3d.Env.daeDiffuseMultiplier);
@@ -132,7 +131,6 @@ GameObject.loadObj = function (model, mtl, callback) {
                                        model.children.forEach( c => traverseMaterial(c) );
                                    }
                                    traverseMaterial(m.scene);
-                                   console.log(m.scene);
                                    callback.call(null, m.scene);                                   
                                });
                            });
@@ -151,7 +149,7 @@ GameObject.loadObj = function (model, mtl, callback) {
                     Object.values(materials.materials).forEach( m => {
                         m.color.multiplyScalar(env3d.Env.objDiffuseMultiplier);
                     });
-                    console.log('loading mtl', materials);
+                    //console.log('loading mtl', materials);
                     //var objLoader = GameObject.objLoader;
                     var objLoader = new THREE.OBJLoader();
                     objLoader.setMaterials(materials);
@@ -169,28 +167,12 @@ GameObject.loadObj = function (model, mtl, callback) {
             }
         } else if (model.endsWith('fbx')) {
             //console.log('loading', GameObject.fbxLoader);
-            GameObject.fbxLoader.load(model, function(m) {
-                console.log('loaded', m);
+            GameObject.fbxLoader.load(model, function(m) {                
                 GameObject.modelsCache[model] = m;                
-                function traverseMaterial(model) {
-                    console.log('traversing', model);
-                    if (model.material) {
-                        if (!Array.isArray(model.material)) {
-                            model.material.color.multiplyScalar(env3d.Env.fbxDiffuseMultiplier);
-                        } else {
-                            model.material.forEach(
-                                m => m.color.multiplyScalar(env3d.Env.fbxDiffuseMultiplier)
-                            );
-                        }
-                    }
-                    model.children.forEach( c => traverseMaterial(c) );
-                }
-                traverseMaterial(m);
                 callback.call(null, m);
             });            
         } else if (model.endsWith('dae')) {
             GameObject.daeLoader.load(model, function(m) {
-                console.log('dae loaded', m);
                 GameObject.modelsCache[model] = m.scene;
                 callback.call(null, m.scene);
             });

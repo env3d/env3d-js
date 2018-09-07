@@ -55003,7 +55003,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 				jszipUtils_min.getBinaryContent(model, function (err, data) {
 					var z = new jszip_min();
 					z.loadAsync(data).then(function (zip) {
-						console.log(zip.files);
+						//console.log(zip.files);
 						if (zip.files['tinker.obj'] && zip.files['obj.mtl']) {
 							// We have a tinkercad file                        
 							zip.file('obj.mtl').async('string').then(function (mtl) {
@@ -55016,14 +55016,14 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 										m.color.multiplyScalar(env3d.Env.objDiffuseMultiplier);
 									});
 									var m = GameObject.objLoader.setMaterials(materials).parse(f);
-									console.log('model loaded from zip', m);
+									//console.log('model loaded from zip', m);
 									GameObject.modelsCache[model] = m;
 									callback.call(null, m);
 								});
 							});
 						} else if (zip.files['model.dae']) {
 							// we have a sketchup collada export
-							console.log('processing collada');
+							//console.log('processing collada');
 
 							zip.file('model.dae').async('string').then(function (dae) {
 								var assetPromises = [];
@@ -55051,7 +55051,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 									var m = GameObject.daeLoader.parse(dae);
 									GameObject.modelsCache[model] = m.scene;
 									function traverseMaterial(model) {
-										console.log(model.material);
 										if (model.material) {
 											if (!Array.isArray(model.material)) {
 												model.material.color.multiplyScalar(env3d.Env.daeDiffuseMultiplier);
@@ -55066,7 +55065,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 										});
 									}
 									traverseMaterial(m.scene);
-									console.log(m.scene);
 									callback.call(null, m.scene);
 								});
 							});
@@ -55084,7 +55082,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 						Object.values(materials.materials).forEach(function (m) {
 							m.color.multiplyScalar(env3d.Env.objDiffuseMultiplier);
 						});
-						console.log('loading mtl', materials);
+						//console.log('loading mtl', materials);
 						//var objLoader = GameObject.objLoader;
 						var objLoader = new THREE.OBJLoader();
 						objLoader.setMaterials(materials);
@@ -55103,29 +55101,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			} else if (model.endsWith('fbx')) {
 				//console.log('loading', GameObject.fbxLoader);
 				GameObject.fbxLoader.load(model, function (m) {
-					console.log('loaded', m);
 					GameObject.modelsCache[model] = m;
-					function traverseMaterial(model) {
-						console.log('traversing', model);
-						if (model.material) {
-							if (!Array.isArray(model.material)) {
-								model.material.color.multiplyScalar(env3d.Env.fbxDiffuseMultiplier);
-							} else {
-								model.material.forEach(function (m) {
-									return m.color.multiplyScalar(env3d.Env.fbxDiffuseMultiplier);
-								});
-							}
-						}
-						model.children.forEach(function (c) {
-							return traverseMaterial(c);
-						});
-					}
-					traverseMaterial(m);
 					callback.call(null, m);
 				});
 			} else if (model.endsWith('dae')) {
 				GameObject.daeLoader.load(model, function (m) {
-					console.log('dae loaded', m);
 					GameObject.modelsCache[model] = m.scene;
 					callback.call(null, m.scene);
 				});
