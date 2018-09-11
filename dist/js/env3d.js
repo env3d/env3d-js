@@ -54944,7 +54944,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 			_this2.assets = {};
 
 			_this2.setURLModifier(function (url) {
-				var dataUrl = _this2.assets[url];
+				//console.log('loading manager ' +decodeURI(url));
+				var dataUrl = _this2.assets[decodeURI(url)];
 				return dataUrl ? dataUrl : url;
 			});
 			return _this2;
@@ -55004,10 +55005,20 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 					var z = new jszip_min();
 					z.loadAsync(data).then(function (zip) {
 						//console.log(zip.files);
-						if (zip.files['tinker.obj'] && zip.files['obj.mtl']) {
+						// figure out if we have a .dae or .obj
+						var daeFile = null,
+						    objFile = null,
+						    mtlFile = null;
+						Object.keys(zip.files).forEach(function (f) {
+							if (f.endsWith('obj')) objFile = f;
+							if (f.endsWith('mtl')) mtlFile = f;
+							if (f.endsWith('dae')) daeFile = f;
+						});
+
+						if (objFile && mtlFile) {
 							// We have a tinkercad file                        
-							zip.file('obj.mtl').async('string').then(function (mtl) {
-								zip.file('tinker.obj').async('string').then(function (f) {
+							zip.file(mtlFile).async('string').then(function (mtl) {
+								zip.file(objFile).async('string').then(function (f) {
 									// f is the text version of the file
 									var materials = GameObject.mtlLoader.parse(mtl);
 									materials.preload();
@@ -55021,16 +55032,23 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 									callback.call(null, m);
 								});
 							});
-						} else if (zip.files['model.dae']) {
+						} else if (daeFile) {
 							// we have a sketchup collada export
 							//console.log('processing collada');
 
-							zip.file('model.dae').async('string').then(function (dae) {
+							// If the daeFile is in a subfolder, we get the path
+							var dir = daeFile.substr(0, daeFile.lastIndexOf('/'));
+							// add the trailing /
+							if (dir.length > 0) dir += '/';
+
+							zip.file(daeFile).async('string').then(function (dae) {
 								var assetPromises = [];
 
 								// preload all the images
-								Object.keys(zip.files).filter(function (f) {
-									return f.startsWith('model/');
+								Object.keys(zip.files).filter(
+								//f => f.includes('/')
+								function (f) {
+									return !f.endsWith('dae') && !zip.files[f].dir;
 								}).forEach(function (f) {
 									// put all the loading promises into an array
 									assetPromises.push(zip.file(f).async('base64').then(function (data) {
@@ -55038,7 +55056,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 											// http://www.jstips.co/en/javascript/get-file-extension/ 
 											var extension = f.slice((f.lastIndexOf('.') - 1 >>> 0) + 2);
 											extension = extension.toLowerCase();
-											resolve([f, 'data:image/' + extension + ';base64,' + data]);
+											// strip the directory
+											var fileKey = f;
+											if (f.indexOf(dir) > -1) fileKey = f.substr(f.indexOf(dir) + dir.length);
+											//console.log(dir, fileKey);
+											resolve([fileKey, 'data:image/' + extension + ';base64,' + data]);
 										});
 									}));
 								});
@@ -55209,12 +55231,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 					fetch(gameobj.model).then(function (res) {
 						return res.json();
 					}).then(function (json) {
-						console.log('loading custom json asset', gameobj.model);
+						//console.log('loading custom json asset', gameobj.model);
 						gameobj.mesh.children.length = 0;
 						var dir = gameobj.model.slice(0, gameobj.model.lastIndexOf('/') + 1);
 						json.Components.forEach(function (c) {
 							var cmodel = dir + c.Asset;
-							console.log(cmodel, c);
 							GameObject.loadObj(cmodel, null, function (o) {
 								//console.log('loaded', o);
 								var clone = o.clone();
@@ -55249,7 +55270,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 							if (gameobj.model.endsWith('zip') || gameobj.model.endsWith('dae') || gameobj.mtl && gameobj.model.indexOf('tinker.obj') > -1) {
 								// if the mtl is present, we assume it's from tinkercad and
 								// perform automatic scaling and rotation
-								console.log(clone);
+								//console.log(clone);
 								clone.scale.x = 0.1;
 								clone.scale.y = 0.1;
 								clone.scale.z = 0.1;
@@ -55747,7 +55768,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 	function keyup(e) {
 		var e = window.event || e;
-		console.log('keyup', e);
+		//console.log('keyup', e);
 		if (e.keyCode == 87) {
 			//W
 			movement[0] = 0;

@@ -31,7 +31,7 @@
          }
          
          window.addEventListener('load', function() {
-
+            env3d.Env.daeDiffuseMultiplier = 0.95;
              var env = new env3d.Env();
 
              // Lighting is required for mtl files to work
@@ -97,7 +97,8 @@
                  texture: null,
                  //model: 'http://api.operatoroverload.com/models/363-601.zip'
                  //model: 'https://env3d.github.io/env3d-blockly-models/ap_Vehicles/assets/a_airplane_aa.json'
-                 model: 'http://api.operatoroverload.com/models/bedroom.zip'
+                 //model: 'http://api.operatoroverload.com/models/bedroom.zip'
+                 model: 'models/testdae/midcentury.zip'
              });
              
              

@@ -71,7 +71,7 @@ function keydown(e) {
 
 function keyup(e) {
     var e = window.event || e;
-    console.log('keyup', e);
+    //console.log('keyup', e);
     if (e.keyCode == 87) { //W
         movement[0] = 0;
     } else if (e.keyCode == 83) { //S

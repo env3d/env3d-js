@@ -8,7 +8,8 @@ class ZipManager extends THREE.LoadingManager {
         this.assets = {};        
 
         this.setURLModifier( ( url ) => {
-            let dataUrl = this.assets[url];
+            //console.log('loading manager ' +decodeURI(url));
+            let dataUrl = this.assets[decodeURI(url)];
             return dataUrl ? dataUrl : url;
             
         } );
@@ -70,10 +71,18 @@ GameObject.loadObj = function (model, mtl, callback) {
                 let z = new JSZip();
                 z.loadAsync(data).then(function(zip) {
                     //console.log(zip.files);
-                    if (zip.files['tinker.obj'] && zip.files['obj.mtl']) {
+                    // figure out if we have a .dae or .obj
+                    var daeFile = null, objFile = null, mtlFile = null;
+                    Object.keys(zip.files).forEach( f => {
+                        if (f.endsWith('obj')) objFile = f;
+                        if (f.endsWith('mtl')) mtlFile = f;
+                        if (f.endsWith('dae')) daeFile = f;
+                    });
+                    
+                    if (objFile && mtlFile) {
                         // We have a tinkercad file                        
-                        zip.file('obj.mtl').async('string').then((mtl) => {
-                            zip.file('tinker.obj').async('string').then((f) => {
+                        zip.file(mtlFile).async('string').then((mtl) => {
+                            zip.file(objFile).async('string').then((f) => {
                                 // f is the text version of the file
                                 let materials = GameObject.mtlLoader.parse(mtl);
                                 materials.preload();
@@ -87,17 +96,23 @@ GameObject.loadObj = function (model, mtl, callback) {
                                 callback.call(null, m);
                             });                        
                         });
-                    } else if (zip.files['model.dae']) {
+                    } else if (daeFile) {
                         // we have a sketchup collada export
                         //console.log('processing collada');
+
+                        // If the daeFile is in a subfolder, we get the path
+                        let dir = daeFile.substr(0, daeFile.lastIndexOf('/'));
+                        // add the trailing /
+                        if (dir.length > 0) dir += '/';
                         
-                        zip.file('model.dae').async('string')
+                        zip.file(daeFile).async('string')
                            .then((dae) => {
                                let assetPromises = [];
 
                                // preload all the images
                                Object.keys(zip.files).filter(
-                                   f => f.startsWith('model/')
+                                   //f => f.includes('/')
+                                   f => !f.endsWith('dae') && !zip.files[f].dir
                                ).forEach( f => {
                                    // put all the loading promises into an array
                                    assetPromises.push(
@@ -107,7 +122,11 @@ GameObject.loadObj = function (model, mtl, callback) {
                                                    // http://www.jstips.co/en/javascript/get-file-extension/ 
                                                    var extension = f.slice( ( f.lastIndexOf( '.' ) - 1 >>> 0 ) + 2 ); 
                                                    extension = extension.toLowerCase();
-                                                   resolve([f,`data:image/${extension};base64,${data}`]);
+                                                   // strip the directory
+                                                   let fileKey = f;
+                                                   if (f.indexOf(dir) > -1) fileKey = f.substr(f.indexOf(dir)+dir.length);
+                                                   //console.log(dir, fileKey);
+                                                   resolve([fileKey,`data:image/${extension};base64,${data}`]);
                                                });
                                            })
                                    );
@@ -278,12 +297,11 @@ GameObject.patchGameObject = function patchFun(gameobj) {
                 fetch(gameobj.model).then( res => {
                     return res.json();
                 }).then(json => {                    
-                    console.log('loading custom json asset', gameobj.model);
+                    //console.log('loading custom json asset', gameobj.model);
                     gameobj.mesh.children.length = 0;
                     let dir = gameobj.model.slice(0, gameobj.model.lastIndexOf('/')+1);
                     json.Components.forEach( c => {
                         let cmodel = dir+c.Asset; 
-                        console.log(cmodel, c);
                         GameObject.loadObj(cmodel, null, o => {                            
                             //console.log('loaded', o);
                             let clone = o.clone();
@@ -330,7 +348,7 @@ GameObject.patchGameObject = function patchFun(gameobj) {
                         {
                             // if the mtl is present, we assume it's from tinkercad and
                             // perform automatic scaling and rotation
-                            console.log(clone);
+                            //console.log(clone);
                             clone.scale.x = 0.1;
                             clone.scale.y = 0.1;
                             clone.scale.z = 0.1;
