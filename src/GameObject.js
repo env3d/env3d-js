@@ -74,9 +74,12 @@ GameObject.loadObj = function (model, mtl, callback) {
                     // figure out if we have a .dae or .obj
                     var daeFile = null, objFile = null, mtlFile = null;
                     Object.keys(zip.files).forEach( f => {
-                        if (f.endsWith('obj')) objFile = f;
-                        if (f.endsWith('mtl')) mtlFile = f;
-                        if (f.endsWith('dae')) daeFile = f;
+                        // need to skip stupid osx finder files
+                        if (!f.includes('__MACOSX')) {
+                            if (f.endsWith('obj')) objFile = f;
+                            if (f.endsWith('mtl')) mtlFile = f;
+                            if (f.endsWith('dae')) daeFile = f;
+                        }
                     });
                     
                     if (objFile && mtlFile) {
@@ -98,7 +101,7 @@ GameObject.loadObj = function (model, mtl, callback) {
                         });
                     } else if (daeFile) {
                         // we have a sketchup collada export
-                        //console.log('processing collada');
+                        console.log('processing collada ',daeFile);
 
                         // If the daeFile is in a subfolder, we get the path
                         let dir = daeFile.substr(0, daeFile.lastIndexOf('/'));
