@@ -14,7 +14,9 @@
          window.addEventListener('load', function() {
 
              var env = new env3d.Env();
-
+             
+             env.setCrosshair(true);
+             
 	     //env.scene.add( water ); 
              var hLight = new THREE.HemisphereLight( 0xffffff, 0x000000, 5);
              env.scene.add(hLight);
@@ -25,6 +27,9 @@
                           
              window['env'] = env;
              console.log(env);
+
+             env.start();
+             env.setCameraXYZ(5,5,25);
              
 
              env.setSky('../textures/skybox/default');
@@ -45,16 +50,23 @@
                  texture: null,                 
                  model: 'https://env3d.github.io/env3d-blockly-models/e_four_seasons/e_four_seasons.json'
              });
-             
-             env.addObject({
+
+             let tux = {
                  x: 5, y: 1, z: 5,
                  texture: '../models/tux/tux.png',
                  model: '../models/tux/tux.obj'
-             });
+             };
+             
+             env.addObject(tux);
 
-             env.start();
-             env.setCameraXYZ(5,5,25);
-
+             setInterval( () => {
+                 let o = env.getPick();
+                 if (o == tux) {                     
+                     tux.x += 1;
+                 }
+             }, 32);
+             
+             
          });
         </script>
         <style>
