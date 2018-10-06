@@ -1,10 +1,8 @@
 import './three.js';
 import '../node_modules/three/examples/js/renderers/SoftwareRenderer.js';
 import '../node_modules/three/examples/js/renderers/Projector.js';
-import '../node_modules/three/examples/js/effects/VREffect.js';
 import '../node_modules/three/examples/js/loaders/OBJLoader.js';
 import '../node_modules/three/examples/js/loaders/MTLLoader.js';
-//import '../node_modules/three/examples/js/loaders/FBXLoader.js';
 // Custom FBXLoader
 import './FBXLoader.js';
 import '../node_modules/three/examples/js/loaders/ColladaLoader.js';
@@ -20,9 +18,19 @@ import {default as Hud} from './hud.js';
 import {default as Keyboard} from './lwjgl-keyboard.js';
 import {default as DefaultControlHandlers} from './DefaultControlHandlers.js';
 import {default as Stats} from './Stats.js';
-import {default as Detector} from '../node_modules/three/examples/js/Detector.js';
+
 import {default as LoadWorld} from './LoadWorld.js';
 import {default as VideoSphere} from './VideoSphere.js';
+
+import {default as EnvObject} from './EnvObject.js';
+import {default as EnvWater} from './EnvWater.js';
+
+import {default as WebXRManager} from './WebXRManager.js';
+
+// experimenting with WebXR
+
+import {default as WEBVR} from './WebVR.js';
+window['WEBVR'] = WEBVR;
 
 // If defaultRoom is true, create one
 var Env = function(defaultRoom) {
@@ -64,14 +72,10 @@ var Env = function(defaultRoom) {
     this.scene.add(this.room);
 
     this.gameObjects = [];
-
-    //Detector.webgl = false;
-    if (Detector.webgl) {
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    } else {
-        this.renderer = new THREE.SoftwareRenderer();
-    }
-
+    
+    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.renderer.vr = new WebXRManager(this.renderer);
+    
     // an object to store statistics such as framerate and number of triangles
     this.stats = new Stats(this.renderer);
     
@@ -79,16 +83,6 @@ var Env = function(defaultRoom) {
     // @todo: want to attach to an element, maybe create custom element
     this.canvas = this.renderer.domElement;
     document.querySelector('#env3d').appendChild(this.canvas);
-
-    // Turn this on for stereo rendering
-    if (THREE.VREffect) {
-        this.vrEffect = new THREE.VREffect(this.renderer);
-        this.renderer.setPixelRatio(Math.floor(window.devicePixelRatio));
-        this.vrEffect.setSize( window.innerWidth, window.innerHeight, false );        
-        //this.vrEffect.setSize( this.canvas.clientWidth, this.canvas.clientHeight, false );
-    }  else {
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-    }
     
     this.lastKey = 0;
     this.lastKeyDown = 0;
@@ -122,47 +116,16 @@ var Env = function(defaultRoom) {
 
 // When we call start, determine if running in vr mode or not
 Env.prototype.start = function(settings) {
-        
-    window.addEventListener('resize', onResize.bind(this));
 
+    
+    window.addEventListener('resize', onResize.bind(this));    
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    
     console.log('starting env3d ', settings);
 
     this.animateObjects();
-    if (settings && settings.vr && navigator.getVRDisplays) {
-        window.addEventListener('vrdisplaypresentchange', () => {
-            console.log('vrDisplayChange');
-            onResize.apply(this)
-        });
-        
-        navigator.getVRDisplays().then(function(displays) {
-            if (displays.length > 0) {
-                console.log('VR Detected');
-                // vrDisplay will be present
-                this.vrDisplay = displays[0];            
-
-                console.log('scheduling animation frame on display', this.vrDisplay);
-                requestAnimationFrame(this.animate.bind(this));
-                
-                //requestAnimationFrame(this.animate.bind(this));
-                document.querySelector('#vr').addEventListener('click', () => {
-                    this.vrDisplay.requestPresent([{source: document.querySelector('#env3d canvas')}]);
-                });
-            } else {
-                console.log('VR browser but no display, regular rendering');
-                requestAnimationFrame(this.animate.bind(this));
-                document.querySelector('#vr').addEventListener('click', () => {                    
-                    console.log('fullscreen');
-                    window.dispatchEvent(new Event('env3dRequestPresent'));
-                });
-            }
-        }.bind(this)).catch(err => {
-            console.log("Error with VR displays, revert to regular rendering",err);
-            requestAnimationFrame(this.animate.bind(this));
-        });        
-    } else {
-        console.log('non VR browser, normal rendering')
-        requestAnimationFrame(this.animate.bind(this));        
-    }
+    
+    requestAnimationFrame(this.animate.bind(this));
 }
 
 function onResize() {
@@ -171,11 +134,8 @@ function onResize() {
             onResize.resizeDelay = null;
             let w = window.innerWidth, h = window.innerHeight;
             console.log('resize to ', w, h);
-            if (this.vrEffect) {
-                this.vrEffect.setSize( w, h, false );
-            } else {
-                this.renderer.setSize(w, h);
-            }
+            this.renderer.setSize(w, h);
+            
             this.camera.aspect = w / h;
             this.camera.updateProjectionMatrix();
         }, 250);
@@ -194,19 +154,9 @@ Env.prototype.animate = function() {
     ENV.camera.rotation.y = ENV.cameraYaw * (Math.PI / 180);
     ENV.camera.rotation.z = ENV.cameraRoll * (Math.PI / 180);    
 
-    if (this.vrEffect) {
-        this.vrEffect.render(ENV.scene, ENV.camera);
-    } else {
-        this.renderer.render(ENV.scene, ENV.camera);
-    }
+    this.renderer.render(ENV.scene, ENV.camera);    
+    requestAnimationFrame(Env.prototype.animate.bind(this));
     
-    if (this.vrDisplay) {
-        this.vrDisplay.requestAnimationFrame(Env.prototype.animate.bind(this));
-        this.vrController();        
-    } else {
-        requestAnimationFrame(Env.prototype.animate.bind(this));            
-    }
-
     // collect stats if requested
     this.stats && this.stats.sample();
 }
@@ -897,15 +847,12 @@ Env.fbxDiffuseMultiplier = 1;
 // We create the env3d object, which will be "exported"
 // Since we are including it in HTML, we allow it
 // to be created under window
+    
 window['env3d'] = {};
 window['env3d'].Env = Env;
-
-import {default as EnvObject} from './EnvObject.js';
-import {default as EnvWater} from './EnvWater.js';
 
 window['env3d'].EnvObject = EnvObject;
 window['env3d'].advanced = {};
 window['env3d'].advanced.EnvNode = EnvObject;
 window['env3d'].advanced.EnvWater = EnvWater;
 window['org.lwjgl.input.Keyboard'] = Keyboard;
-

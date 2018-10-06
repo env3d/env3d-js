@@ -1,0 +1,61 @@
+<html>
+    <head>
+        <style>
+         body {
+             margin:0;
+             padding:0;
+         }
+        </style>
+        <script src='https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.js'></script>
+        <script src='../js/env3d.js'></script>
+        <script>
+         let ployfill = new WebXRPolyfill();
+         
+         window.addEventListener('load', () => {
+             let env = new env3d.Env();
+
+             window['env'] = env;
+             
+             env.setSky('textures/skybox/default');
+
+             /*
+             env.setRoom({
+                 textureNorth: null,
+                 textureSouth: null,
+                 textureEast: null,
+                 textureWest: null,
+                 textureTop: null,
+                 textureBottom: null                
+             });
+             */
+             
+             env.addObject({
+                 x: 5,
+                 y: 5,
+                 z: 5
+             });
+             env.start();
+             env.renderer.vr.enabled = true;
+
+             /*
+             env.renderer.vr._getCamera = env.renderer.vr.getCamera;
+             env.renderer.vr.getCamera = function(camera) {
+                 let pos = camera.position.clone();
+                 let c = this._getCamera(camera);
+                 c.position.set(pos.x, pos.y, pos.z);
+                 //c.position.set(5,5,13);
+                 //console.log(c.position);
+                 return c;
+             }.bind(env.renderer.vr);
+              */
+
+             env.setDisplayStr('hi');
+             
+             document.body.appendChild(WEBVR.createButton(env.renderer));             
+         });
+        </script>
+    </head>
+    <body>
+        <div id='env3d'></div>        
+    </body>    
+</html>
