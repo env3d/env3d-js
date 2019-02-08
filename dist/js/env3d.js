@@ -55193,6 +55193,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 			gameobj.mesh.children.forEach(function (c) {
 				c.material = gameobj.material;
+				c.envGameObject = self;
 			});
 		});
 
@@ -55270,6 +55271,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 							}
 
 							var clone = c.clone();
+							clone.traverse(function (child) {
+								child.envGameObject = gameobj;
+							});
 							clone.envGameObject = gameobj;
 							if (gameobj.model.endsWith('zip') || gameobj.model.endsWith('dae') || gameobj.mtl && gameobj.model.indexOf('tinker.obj') > -1) {
 								// if the mtl is present, we assume it's from tinkercad and

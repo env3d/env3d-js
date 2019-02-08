@@ -257,7 +257,8 @@ GameObject.patchGameObject = function patchFun(gameobj) {
         self.material = new THREE.MeshBasicMaterial({map:texture, side:THREE.DoubleSide});
         
         gameobj.mesh.children.forEach(function(c) {
-            c.material = gameobj.material;
+            c.material = gameobj.material;	    
+	    c.envGameObject = self;
         });            
     });
 
@@ -346,6 +347,7 @@ GameObject.patchGameObject = function patchFun(gameobj) {
                         }
                         
                         var clone = c.clone();
+			clone.traverse( child => { child.envGameObject = gameobj } );
 			clone.envGameObject = gameobj;
                         if (gameobj.model.endsWith('zip') || gameobj.model.endsWith('dae') ||
                             (gameobj.mtl && gameobj.model.indexOf('tinker.obj') > -1))
