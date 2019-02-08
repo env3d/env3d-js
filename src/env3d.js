@@ -752,6 +752,39 @@ Env.prototype.getPick = function(x, y) {
     
     raycaster.setFromCamera(mouse, this.camera);
 
+    var camera = this.camera;
+
+    pickObjects.length = 0;
+    var intersects = raycaster.intersectObjects(this.scene.children, true, pickObjects);
+
+    //console.log(intersects);
+    for (var i=0; i<intersects.length; i++) {
+	if (intersects[i].object && intersects[i].object.envGameObject) {
+	    return intersects[i].object.envGameObject;
+	}
+    }
+    return null;
+
+    /*
+    this.gameObjects.forEach(function(obj) {
+        var intersects = raycaster.intersectObjects(obj.mesh.children, true);
+        if (intersects.length > 0) {
+            // for each object, we calculate the distance to the camera
+            pickObjects.push({
+                dist: camera.position.distanceTo(obj.mesh.position),
+                obj: obj
+	    });
+	}
+    });
+    
+    // finds the closest to the camera    
+    if (pickObjects.length > 0) {
+        pickObjects.sort(function(a,b){return a.dist - b.dist});
+        return pickObjects[0].obj;
+    }
+    */
+    
+    /*
     var intersects = raycaster.intersectObjects(this.gameObjects.map( o => o.mesh ), true, pickObjects);
 
     // private function to traverse upwards
@@ -767,6 +800,7 @@ Env.prototype.getPick = function(x, y) {
     if (intersects.length > 0) {        
         return getGameObject(intersects[0].object);
     }
+    */
     
     return null;
 }

@@ -55270,6 +55270,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 							}
 
 							var clone = c.clone();
+							clone.envGameObject = gameobj;
 							if (gameobj.model.endsWith('zip') || gameobj.model.endsWith('dae') || gameobj.mtl && gameobj.model.indexOf('tinker.obj') > -1) {
 								// if the mtl is present, we assume it's from tinkercad and
 								// perform automatic scaling and rotation
@@ -56989,23 +56990,54 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 		raycaster.setFromCamera(mouse, this.camera);
 
-		var intersects = raycaster.intersectObjects(this.gameObjects.map(function (o) {
-			return o.mesh;
-		}), true, pickObjects);
+		var camera = this.camera;
 
-		// private function to traverse upwards
-		function getGameObject(o) {
-			if (!o) return null;
-			if (o.envGameObject) {
-				return o.envGameObject;
-			} else {
-				return getGameObject(o.parent);
+		pickObjects.length = 0;
+		var intersects = raycaster.intersectObjects(this.scene.children, true, pickObjects);
+
+		//console.log(intersects);
+		for (var i = 0; i < intersects.length; i++) {
+			if (intersects[i].object && intersects[i].object.envGameObject) {
+				return intersects[i].object.envGameObject;
 			}
 		}
+		return null;
 
-		if (intersects.length > 0) {
-			return getGameObject(intersects[0].object);
-		}
+		/*
+  this.gameObjects.forEach(function(obj) {
+      var intersects = raycaster.intersectObjects(obj.mesh.children, true);
+      if (intersects.length > 0) {
+          // for each object, we calculate the distance to the camera
+          pickObjects.push({
+              dist: camera.position.distanceTo(obj.mesh.position),
+              obj: obj
+   });
+  }
+  });
+  
+  // finds the closest to the camera    
+  if (pickObjects.length > 0) {
+      pickObjects.sort(function(a,b){return a.dist - b.dist});
+      return pickObjects[0].obj;
+  }
+  */
+
+		/*
+  var intersects = raycaster.intersectObjects(this.gameObjects.map( o => o.mesh ), true, pickObjects);
+   // private function to traverse upwards
+  function getGameObject(o) {
+      if (!o) return null;
+      if (o.envGameObject) {
+          return o.envGameObject;
+      } else {
+          return getGameObject(o.parent);
+      }
+  }
+  
+  if (intersects.length > 0) {        
+      return getGameObject(intersects[0].object);
+  }
+  */
 
 		return null;
 	};

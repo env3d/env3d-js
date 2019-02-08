@@ -59,12 +59,14 @@
              
              env.addObject(tux);
 
+
              setInterval( () => {
                  let o = env.getPick();
                  if (o == tux) {                     
                      tux.x += 1;
                  }
              }, 32);
+	     
              
              
          });

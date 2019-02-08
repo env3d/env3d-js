@@ -338,7 +338,7 @@ GameObject.patchGameObject = function patchFun(gameobj) {
                 GameObject.loadObj(gameobj.model, gameobj.mtl, function(o) {
                     
                     o.children.forEach(function(c) {
-                        
+			
                         if (gameobj.model.endsWith('fbx')) {
                             c.material = GameObject.standardFbxMaterial;
                         } else {
@@ -346,6 +346,7 @@ GameObject.patchGameObject = function patchFun(gameobj) {
                         }
                         
                         var clone = c.clone();
+			clone.envGameObject = gameobj;
                         if (gameobj.model.endsWith('zip') || gameobj.model.endsWith('dae') ||
                             (gameobj.mtl && gameobj.model.indexOf('tinker.obj') > -1))
                         {
