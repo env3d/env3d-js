@@ -45,6 +45,13 @@
                  texture: null,                 
                  model: '../models/fbx/testHouse_B.fbx'
              });
+
+	     env.addObject({
+		 x: -20, y:0, z:0,
+		 texture: null,
+		 model: 'https://env3d.github.io/env3d-blockly-models/ap_Industries/assets/a_airport_tower_aa.json'
+	     });
+	     
              env.addObject({
                  x: 0, y: 0, z: 0,
                  texture: null,                 
@@ -62,6 +69,7 @@
 
              setInterval( () => {
                  let o = env.getPick();
+		 
                  if (o == tux) {                     
                      tux.x += 1;
                  }

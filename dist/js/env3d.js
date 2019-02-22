@@ -55249,6 +55249,13 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 								clone.children.forEach(function (c) {
 									c.material = GameObject.standardFbxMaterial;
 								});
+
+								// If we have only one object, then allow it to be selectable
+								if (json.Components.length == 1) {
+									clone.traverse(function (child) {
+										child.envGameObject = gameobj;
+									});
+								}
 								gameobj.mesh.add(clone);
 							});
 						});

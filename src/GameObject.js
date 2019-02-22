@@ -318,6 +318,11 @@ GameObject.patchGameObject = function patchFun(gameobj) {
                             clone.children.forEach( c => {
                                 c.material = GameObject.standardFbxMaterial;
                             });
+			    
+			    // If we have only one object, then allow it to be selectable
+			    if (json.Components.length == 1) {
+				clone.traverse( child => { child.envGameObject = gameobj } );
+			    }
                             gameobj.mesh.add(clone);
                         });
                     });
