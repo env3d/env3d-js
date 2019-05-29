@@ -1,0 +1,39 @@
+<html>
+    <head>
+        <script src="../js/inflate.min.js"></script>
+        <script src="../js/env3d.js"></script>
+        
+        <script type="text/javascript">
+
+         
+         window.addEventListener('load', function() {
+
+             var env = new env3d.Env();
+
+             env.setRoom({
+		 textureNorth: null, textureEast: null, textureWest: null, textureSouth: null, textureTop: null, textureBottom: null
+	     });
+
+	     var i = 0;
+	     var backgrounds = [
+		 'http://api.operatoroverload.com/test_vr.jpg',
+		 'textures/pano.webm'
+	     ];
+	     setInterval(() => {
+		 env.setBackgroundVideo(backgrounds[i++ % 2]);
+	     }, 2000);
+	     
+	     env.start();
+         });
+        </script>
+        <style>
+         body {
+             margin: 0;
+             padding: 0;
+         }
+        </style>
+    </head>
+    <body>
+        <div id="env3d"></div>
+    </body>
+</html>

@@ -56600,7 +56600,12 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 		var v = new VideoSphere_1(path);
 		var m = v.getMesh();
 
-		this.scene.add(m);
+		if (this.videoMesh) {
+			this.scene.remove(this.videoMesh);
+		}
+
+		this.videoMesh = m;
+		this.scene.add(this.videoMesh);
 	};
 
 	Env.prototype.setSky = function (path) {
