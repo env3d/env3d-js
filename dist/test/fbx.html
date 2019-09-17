@@ -63,8 +63,18 @@
                  texture: '../models/tux/tux.png',
                  model: '../models/tux/tux.obj'
              };
+             let dog = {
+                 x: 15, y: 0, z: 5,
+                 model: '../models/dog/dog.fbx'
+             };
+             let rabbit = {
+                 x: 25, y: 0, z: 5,
+	         model: '../models/rabbit/rabbit.fbx'
+             };
              
-             env.addObject(tux);
+             //env.addObject(tux);
+	     env.addObject(dog);
+	     env.addObject(rabbit);
 
 
              setInterval( () => {
