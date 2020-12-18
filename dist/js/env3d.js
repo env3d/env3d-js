@@ -57101,16 +57101,29 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 		return audioCache[soundFile];
 	}
 
+	// Load all sound files when loading the page
+	Env.prototype.loadSoundFile = function () {
+		Object.keys(audioCache).forEach(function (key) {
+			audioCache[key].load();
+		});
+	};
+
 	Env.prototype.soundPlay = function (soundFile) {
 		var s = getSoundFile(soundFile);
 		s.loop = false;
-		s.play();
+		s.addEventListener("canplaythrough", function (event) {
+			/* the audio is now playable; play it if permissions allow */
+			s.play();
+		});
 	};
 
 	Env.prototype.soundLoop = function (soundFile) {
 		var s = getSoundFile(soundFile);
 		s.loop = true;
-		s.play();
+		s.addEventListener("canplaythrough", function (event) {
+			/* the audio is now playable; play it if permissions allow */
+			s.play();
+		});
 	};
 
 	Env.prototype.soundStop = function (soundFile) {
