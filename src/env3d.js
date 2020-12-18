@@ -896,16 +896,29 @@ function getSoundFile(soundFile) {
     return audioCache[soundFile];
 }
 
+// Load all sound files when loading the page
+Env.prototype.loadSoundFile = () => {
+  Object.keys(audioCache).forEach(key => {
+    audioCache[key].load()
+  })
+}
+
 Env.prototype.soundPlay = function(soundFile) {
     let s = getSoundFile(soundFile);
     s.loop = false;
-    s.play();
+    s.addEventListener("canplaythrough", event => {
+      /* the audio is now playable; play it if permissions allow */  
+      s.play();
+    });
 }
 
 Env.prototype.soundLoop = function(soundFile) {
     let s = getSoundFile(soundFile);
     s.loop = true;
-    s.play();    
+    s.addEventListener("canplaythrough", event => {
+      /* the audio is now playable; play it if permissions allow */  
+      s.play();
+    });
 }
 
 Env.prototype.soundStop = function(soundFile) {
