@@ -886,14 +886,34 @@ function createCrosshair() {
 }
 
 // Audio section
-const audioCache = {}
+let audioCache;
+const MAX_SOUND_FILES = 5;
+let currentSound = -1;
+
+function findSoundInCache (soundFile) {
+  return audioCache.filter(sound => { return sound.src === soundFile })
+}
 
 function getSoundFile(soundFile) {
-    if (!audioCache[soundFile]) {
-        audioCache[soundFile] = new Audio(soundFile);        
-    }
+  if (audioCache) {
+    // change source of a new sound to the audioCache
+    currentSound = currentSound < MAX_SOUND_FILES - 1 ? currentSound + 1 : 0;
+    audioCache[currentSound].src = soundFile;
+    audioCache[currentSound].load();
+    // audioCache.forEach((sound, index) => console.log("sound source load", index, sound.src))
 
-    return audioCache[soundFile];
+    return audioCache[currentSound];
+  }
+}
+
+Env.prototype.initSoundFiles = function() {
+  audioCache = new Array(MAX_SOUND_FILES).fill(null).map(() => new Audio("../media/click.mp3"))
+}
+
+Env.prototype.loadSoundFiles = function() {
+  audioCache.forEach(sound => {
+    sound.load()
+  })
 }
 
 // Load all sound files when loading the page
@@ -922,9 +942,13 @@ Env.prototype.soundLoop = function(soundFile) {
 }
 
 Env.prototype.soundStop = function(soundFile) {
-    let s = getSoundFile(soundFile);
-    s.pause();    
+  let sounds = findSoundInCache(soundFile);
+  sounds.forEach(s => {
+    s.pause();
+  });   
 }
+
+
 // End Audio section
 
 
