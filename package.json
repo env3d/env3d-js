@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/env3d/env3d-js#readme",
   "dependencies": {
-    "jszip": "^3.1.5",
+    "jszip": "^3.7.0",
     "jszip-utils": "0.0.2",
     "three": "^0.91.0"
   },
